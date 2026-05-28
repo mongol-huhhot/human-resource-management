@@ -1,0 +1,59 @@
+
+:root {
+  --ql_width: calc(100vw - 30px);
+  --janga_color: #03989e;
+  --main-container_card: calc(100vh - 20px); 
+  --inner-container_card: calc(100vh - 180px);
+  --upper_ag_grid: calc(30vh - 60px); 
+  --lower_ag_grid: calc(70vh - 174px); 
+  --dialog-inner-container-height: calc(70vh - 100px);
+  --el-card-padding: 10px;
+}
+
+html, body {
+  overflow-y: hidden;
+  height: calc(100vh);
+  margin: 0;
+  padding: 0;
+}
+.el-dialog__header{
+  padding: 8px 12px !important;
+  padding-bottom: 8px!important;
+  border-bottom: 1px solid #ddd;
+  background: linear-gradient(#f2f8f4c5, #d6f0e954) !important;
+  border-radius: 8px 8px 0px 0px  !important;
+}
+.el-dialog{
+  box-shadow: var(--el-box-shadow-light);
+  border-radius: 8px !important;
+  border: 1px solid #ddd
+}
+.el-dialog__headerbtn {
+  top:12px !important;
+}
+
+.el-card {
+  border-radius: 8px !important;
+}
+
+.el-card__header {
+  background: linear-gradient(#f2f8f4c5, #d6f0e954) !important;
+  margin: 0px !important; 
+  padding: 8px 12px !important;
+}
+
+.el-card__body {
+  padding-bottom: 0px !important;
+  padding-top: 12px !important;
+}
+
+.el-dialog__body {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+
+.el-tabs__item {
+  padding: 0 12px !important;
+  color: var(--janga_color) !important;
+}
