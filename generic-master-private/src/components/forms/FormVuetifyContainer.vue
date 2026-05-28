@@ -21,6 +21,7 @@ const loadedTabs = ref({})
 const loadingTabs = ref({})
 
 const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {})
+const sqltagMap = computed(() => configStore.MAIN_CONFIG?.sqltagMap || {})
 
 onMounted(async () => {
   const multiQueryResult = await dataStore.dbAccessWithMultiTags({
@@ -138,8 +139,8 @@ function parseTabRows(tabCode, rows = []) {
 
 // activeになったタブだけスタッフデータをロードする
 const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
-
-  const staffKey = getStaffKey(dataStore.params.attributes )
+  // dataStore.states.currentRow
+  const staffKey = getStaffKey( dataStore.params.attributes )
 
   console.log(`Loading data for tab: ${tabCode}, staffKey: ${staffKey}`)
 
@@ -152,10 +153,14 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
   if (!options.force && loadedTabs.value[tabCode] === cacheKey) {
     return
   }
+  console.log(`Fetching data for tab: ${tabCode} with staffKey: ${staffKey}`, tabSqlTags.value[tabCode]?.data_key, sqltagMap.value[tabSqlTags.value[tabCode]?.data_key])
 
+  const data_key = tabSqlTags.value[tabCode]?.data_key
+  const sqltag = sqltagMap.value[data_key] || 'staffs.get_staff_profile'
+  console.log(`Using SQLTAG: ${sqltag} for tab: ${tabCode}`)
   const condition = {
     [tabCode]: {
-      SQLTAG: tabSqlTags.value[tabCode]?.sqltag || 'staffs.get_staff_profile',
+      SQLTAG: sqltag,
       category_code: tabCode,
       staff_code: staffKey || null,
       staff_id: staffKey || null,
@@ -329,12 +334,14 @@ async function confirmDelete() {
                 :label="tab.category_name"
                 :children="getItemsByTab(tab.sub_category_code)"
                 :add-button-text="`${tab.category_name}追加`"
+                :tab-key="tab.sub_category_code"
               />
 
               <DynamicVuetifyForm
                 v-else
                 v-model="formData[tab.sub_category_code]"
                 :fields="getItemsByTab(tab.sub_category_code)"
+                :tab-key="tab.sub_category_code"
               />
             </v-card-text>
           </v-card>

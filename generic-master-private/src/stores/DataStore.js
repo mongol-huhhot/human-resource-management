@@ -46,6 +46,10 @@ export const useDataStore = defineStore("dataStore", () => {
         return await baseStore.save(sql_tag, p)
     }
 
+    const saveData = async (p = {}) => {
+        return await runSave('users.save_user_data', p)
+    }
+
     const get_user_master = async (p = {}) => {
         return await runLoad(CONST_DEF.get_user_master, p,  'users.get_user_master')
     }
@@ -116,7 +120,7 @@ export const useDataStore = defineStore("dataStore", () => {
 
         rowCliked,
         runSave,
-
+        saveData,
         // build AG Grid columns on-demand
         buildColumnsDefine,
 

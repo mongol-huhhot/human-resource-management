@@ -24,6 +24,7 @@
         <DynamicVuetifyForm
           v-model="modelValue[index]"
           :fields="children"
+          :tab-key="props.tabKey"
         />
       </v-card-text>
     </v-card>
@@ -51,7 +52,12 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  addButtonText: String
+  addButtonText: String,
+  tabKey: {
+    type: [String, Object],
+    default: null,
+  },
+
 })
 
 const emit = defineEmits(['update:modelValue'])

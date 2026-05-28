@@ -56,4 +56,4 @@ const webComponent = wrapper(WebComponent, WebComponentInner, h)
 
 if (!customElements.get('generic-master-system')) {
   customElements.define('generic-master-system', webComponent)
-}ll
+}

@@ -27,6 +27,7 @@ window.appConfig.MAIN_CONFIG = {
       label: '資格情報',
       data_key: 'staff_education',
       jsonb_fields: ['education_info'],
+      sqltags:{select:'staffs.get_staff_education', save:'staffs.save_staff_education', delete:'staffs.delete_staff_education'},
     },
   },
 
@@ -36,6 +37,14 @@ window.appConfig.MAIN_CONFIG = {
     staff_traffic: 'masters.get_staff_traffic',// スタッフ通勤情報の取得
     staff_bank: 'masters.get_staff_bank', // スタッフ銀行口座情報の取得
     staff_education: 'staffs.get_staff_education',// スタッフ資格情報の取得
-  }
+  },
+  sqlSavetagMap: {
+    staff_profile: 'staffs.get_staff_profile', // スタッフプロフィール情報の取得
+    staff_traffic: 'masters.get_staff_traffic',// スタッフ通勤情報の取得
+    staff_bank: 'masters.get_staff_bank', // スタッフ銀行口座情報の取得
+    staff_education: 'staffs.get_staff_education',// スタッフ資格情報の取得
+  },
+
+
 };
 

@@ -2,7 +2,7 @@
 <script setup>
 import { computed } from 'vue'
 import DatePicker from '@/components/helper/date/DatePicker.vue'
-
+import {useDbStore} from "@/stores/useDbStore";
 
 const props = defineProps({
   modelValue: {
@@ -29,9 +29,15 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  tabKey: {
+    type: [String, Object],
+    default: null,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'submit'])
+
+const dbStore = useDbStore()
 
 const formData = computed({
   get: () => props.modelValue,
@@ -127,6 +133,8 @@ function getProps(field) {
 }
 
 function submit() {
+  console.log('Submitting form with data:', formData.value)
+  dbStore.saveData(formData.value) // 例: データ保存の呼び出し
   emit('submit', formData.value)
 }
 </script>
@@ -141,6 +149,8 @@ function submit() {
         sm="6"
         md="4"
       >
+        <!-- {{ props.items }} -->
+         <!-- {{ field }}::::{{ field.key }}: {{ formData[field.key] }} デバッグ用 -->
         <component
           :is="getComponent(field)"
           :model-value="formData[field.key]"
