@@ -9,41 +9,44 @@ window.appConfig.MAIN_CONFIG = {
       data_key: 'staff_profile',
       jsonb_fields: ['profile_jsonb'],
       skip_reload: true,
+      sqltags:{select:'staffs.get_staff_profile', save:'staffs.save_staff_profile', delete:'staffs.delete_staff_profile'},
     },
 
     traffic: {
       label: '通勤情報',
       data_key: 'staff_traffic',
       jsonb_fields: ['traffic_info'],
+      sqltags:{select:'staffs.get_staff_traffic', save:'staffs.save_staff_traffic', delete:'staffs.delete_staff_traffic'},
     },
 
     bank: {
       label: '銀行情報',
       data_key: 'staff_bank',
       jsonb_fields: [],
+      sqltags:{select:'masters.get_staff_bank', save:'masters.save_staff_bank', delete:'masters.delete_staff_bank'},
     },
 
     education: {
       label: '資格情報',
       data_key: 'staff_education',
       jsonb_fields: ['education_info'],
-      sqltags:{select:'staffs.get_staff_education', save:'staffs.save_staff_education', delete:'staffs.delete_staff_education'},
+      sqltags:{select:'masters.get_staff_education', save:'masters.save_staff_education', delete:'masters.delete_staff_education'},
     },
   },
 
-  // 上記の”data_key”がキーで、SQLタグと対応するデータキーを定義
-  sqltagMap: {
-    staff_profile: 'staffs.get_staff_profile', // スタッフプロフィール情報の取得
-    staff_traffic: 'masters.get_staff_traffic',// スタッフ通勤情報の取得
-    staff_bank: 'masters.get_staff_bank', // スタッフ銀行口座情報の取得
-    staff_education: 'staffs.get_staff_education',// スタッフ資格情報の取得
-  },
-  sqlSavetagMap: {
-    staff_profile: 'staffs.get_staff_profile', // スタッフプロフィール情報の取得
-    staff_traffic: 'masters.get_staff_traffic',// スタッフ通勤情報の取得
-    staff_bank: 'masters.get_staff_bank', // スタッフ銀行口座情報の取得
-    staff_education: 'staffs.get_staff_education',// スタッフ資格情報の取得
-  },
+  // // 上記の”data_key”がキーで、SQLタグと対応するデータキーを定義
+  // sqltagMap: {
+  //   staff_profile: 'staffs.get_staff_profile', // スタッフプロフィール情報の取得
+  //   staff_traffic: 'masters.get_staff_traffic',// スタッフ通勤情報の取得
+  //   staff_bank: 'masters.get_staff_bank', // スタッフ銀行口座情報の取得
+  //   staff_education: 'staffs.get_staff_education',// スタッフ資格情報の取得
+  // },
+  // sqlSavetagMap: {
+  //   staff_profile: 'staffs.get_staff_profile', // スタッフプロフィール情報の取得
+  //   staff_traffic: 'masters.get_staff_traffic',// スタッフ通勤情報の取得
+  //   staff_bank: 'masters.get_staff_bank', // スタッフ銀行口座情報の取得
+  //   staff_education: 'staffs.get_staff_education',// スタッフ資格情報の取得
+  // },
 
 
 };
