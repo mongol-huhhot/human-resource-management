@@ -10,6 +10,9 @@ import { parseJsonbFields, parseAndFlattenJsonbFields } from '@/composables/util
 const dataStore = useDataStore()
 const configStore = useAppConfigStore()
 
+// --- 追加: フォームのref管理 ---
+const formRefs = ref({});
+
 configStore.loadFromWindow()
 
 const formData = ref({})
@@ -22,6 +25,7 @@ const loadingTabs = ref({})
 
 const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {})
 
+//categoryとdictionaryの取得
 onMounted(async () => {
   const multiQueryResult = await dataStore.dbAccessWithMultiTags({
     category: {
@@ -56,6 +60,35 @@ const tabItems = computed(() => {
 const editMode = computed(() => {
   return !!dataStore.states.currentRow
 })
+
+async function handleFormSubmit(tabCode, submittedData) {
+  const row = dataStore.states.currentRow
+  if (!row?.staff_code) return
+
+  const tabConfig = tabSqlTags.value[tabCode]
+  if (!tabConfig) {
+    console.error('tabConfig not found:', tabCode)
+    return
+  }
+
+  const data = submittedData ?? formData.value[tabCode]
+  const ok = await dataStore.saveStaffTab(tabCode, data, tabConfig)
+
+  if (ok) {
+    const cat = getCategoryByTab(tabCode)
+    alert(`${cat?.category_name ?? tabCode}を保存しました`)
+
+    if (!tabConfig.skip_reload) {
+      await loadActiveTabData(tabCode, { force: true })
+    }
+  }
+}
+
+async function save() {
+  const tabCode = activeName.value
+  if (!tabCode) return
+  await handleFormSubmit(tabCode, formData.value[tabCode])
+}
 
 function normalizeCategoryRows(rows = []) {
   return rows
@@ -138,11 +171,13 @@ function parseTabRows(tabCode, rows = []) {
 
 // activeになったタブだけスタッフデータをロードする
 const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
+  //データの読み込みが必要かどうかのチェック（バリデーション）
   const row = dataStore.states.currentRow
   const staffKey = getStaffKey(row)
 
   if (!staffKey || !tabCode || !category.value?.length) return
 
+  //保存先（器）の初期化とキャッシュチェック
   ensureTabFormData(tabCode)
 
   const cacheKey = `${staffKey}:${tabCode}`
@@ -151,15 +186,20 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
     return
   }
 
+  //送信用データ（リクエスト payload）の作成
+  const sqltag = tabSqlTags.value[tabCode]?.sqltags?.select || 'staffs.get_staff_profile'
+  console.log(`Using SQLTAG: ${sqltag} for tab: ${tabCode}`)
+
   const condition = {
     [tabCode]: {
-      SQLTAG: tabSqlTags.value[tabCode]?.sqltag || 'staffs.get_staff_data',
+      SQLTAG: tabSqlTags.value[tabCode]?.sqltags?.select || 'staffs.get_staff_profile',
       category_code: tabCode,
       staff_code: row?.staff_code || null,
       staff_id: row?.staff_id || null,
     }
   }
 
+  //ローディング）の表示と、データ通信の実行
   loadingTabs.value[tabCode] = true
 
   const multiQueryResult = await dataStore.dbAccessWithMultiTags(condition)
@@ -171,9 +211,14 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
     return
   }
 
+  //取得したデータの加工と格納
   const rows = multiQueryResult.data?.[tabCode] || []
+
+  //データベースから返ってきた生のデータ（JSONB形式など）を、
+  // プログラムで扱いやすいように綺麗なオブジェクトに変換。
   const parsedData = parseTabRows(tabCode, rows)
 
+  //繰り返し型のタブ（職歴など）の場合: データを配列としてそのまま格納。
   if (isRepeatableCategory(tabCode)) {
     formData.value[tabCode] = Array.isArray(parsedData) ? parsedData : []
   } else {
@@ -183,6 +228,8 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
     }
   }
 
+  //キャッシュの記録
+  //このスタッフのこのタブのデータが無事に読み込み終わった証拠（cacheKey）を記録
   loadedTabs.value[tabCode] = cacheKey
 
   console.log(`Loaded tab data: ${tabCode}`, formData.value[tabCode])
@@ -191,12 +238,28 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
 watch(
   () => dataStore.states.currentRow,
   async (newVal) => {
+     // 1. データを空にする
     formData.value = {}
     loadedTabs.value = {}
     loadingTabs.value = {}
 
     initializeAllTabContainers()
 
+    // --- ここから追加 ---
+     // 2. 新しいスタッフの基本情報を全タブの土台としてコピーする
+    /*if (newVal) {
+      // newVal に入っている currentRow の値を、タブごとの formData にコピーする
+      // ※ 'basic' はタブのコードに合わせて適宜読み替えてください
+      // 全タブに反映させたい共通データなら、このループ処理で全タブにコピーされます
+      category.value.forEach(cat => {
+        const tabCode = cat.sub_category_code;
+        // currentRow のプロパティを formData の各タブに展開
+        formData.value[tabCode] = { ...newVal }; 
+      });
+    }*/
+    // --- ここまで追加 ---
+
+    // 3. 現在開いているタブのデータをDBから取り直す
     if (newVal && activeName.value) {
       await loadActiveTabData(activeName.value, { force: true })
     }
@@ -230,6 +293,7 @@ watch(
   }
 )
 
+/*
 async function save() {
   console.log('save data:', formData.value)
 
@@ -239,6 +303,7 @@ async function save() {
   //   data: formData.value,
   // })
 }
+*/
 
 async function csvDownload() {
   // CSV出力
@@ -327,13 +392,17 @@ async function confirmDelete() {
                 :label="tab.category_name"
                 :children="getItemsByTab(tab.sub_category_code)"
                 :add-button-text="`${tab.category_name}追加`"
+                @submit="data => handleFormSubmit(tab.sub_category_code, data)"
               />
 
               <DynamicVuetifyForm
                 v-else
                 v-model="formData[tab.sub_category_code]"
                 :fields="getItemsByTab(tab.sub_category_code)"
+                @submit="data => handleFormSubmit(tab.sub_category_code, data)"
               />
+                
+
             </v-card-text>
           </v-card>
         </v-window-item>

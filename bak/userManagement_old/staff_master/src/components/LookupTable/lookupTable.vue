@@ -539,4 +539,4 @@ sample usage:
   <template #default>
     <div class="mt-2 text-caption">選択リストの下に追加情報や説明をここに</div>
   </template>
-</LookupTable> -->
+<!-- </LookupTable> -->

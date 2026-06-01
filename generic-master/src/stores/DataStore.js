@@ -2,6 +2,7 @@ import { reactive, ref, } from "vue";
 import { defineStore, createPinia, setActivePinia } from "pinia";
 import { useDbStore} from "@/stores/useDbStore";
 import { buildInitColumns, }  from '@/composables/useColumns'
+import { buildTabSavePayload } from '@/composables/buildTabSavePayload'
 
 setActivePinia(createPinia());
 
@@ -44,6 +45,33 @@ export const useDataStore = defineStore("dataStore", () => {
 
     const runSave = async (sql_tag, p = {}) => {
         return await baseStore.save(sql_tag, p)
+    }
+
+    const saveData = async (sql_tag, p = {}) => {
+        return await runSave(sql_tag, p)
+    }
+
+    /**
+     * タブ単位の保存（payload 組み立て + runSave）
+     * @param {string} tabCode - sub_category_code
+     * @param {object} formData - タブのフォームデータ
+     * @param {object} tabConfig - tab2sqltag_list[tabCode]
+     */
+    const saveStaffTab = async (tabCode, formData, tabConfig) => {
+        const sqlTag = tabConfig?.sqltags?.save
+        if (!sqlTag) {
+            console.error('[saveStaffTab] sqltags.save が未設定:', tabCode, tabConfig)
+            return null
+        }
+
+        try {
+            const payload = buildTabSavePayload(tabConfig, formData, states.currentRow)
+            console.log(`[saveStaffTab] ${tabCode}`, { sqlTag, payload })
+            return await runSave(sqlTag, payload)
+        } catch (error) {
+            console.error('[saveStaffTab]', tabCode, error)
+            return null
+        }
     }
 
     const get_user_master = async (p = {}) => {
@@ -116,6 +144,8 @@ export const useDataStore = defineStore("dataStore", () => {
 
         rowCliked,
         runSave,
+        saveData,
+        saveStaffTab,
 
         // build AG Grid columns on-demand
         buildColumnsDefine,

@@ -24,6 +24,7 @@
         <DynamicVuetifyForm
           v-model="modelValue[index]"
           :fields="children"
+          @submit="data => emit('submit', data)"
         />
       </v-card-text>
     </v-card>
@@ -54,7 +55,7 @@ const props = defineProps({
   addButtonText: String
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'submit'])
 
 function add() {
   emit('update:modelValue', [
