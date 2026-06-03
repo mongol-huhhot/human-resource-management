@@ -6,6 +6,7 @@ import DynamicVuetifyForm from '@/components/forms/DynamicVuetifyForm.vue'
 import RepeatableFormWrapper from '@/components/forms/RepeatableFormWrapper.vue'
 import { parseJsonbFields, parseAndFlattenJsonbFields } from '@/composables/utilFactory'
 
+
 const dataStore = useDataStore()
 const configStore = useAppConfigStore()
 
@@ -21,20 +22,16 @@ const loadingTabs = ref({})
 
 const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {})
 
-// タブデータをロードする際のカテゴリコード。必要に応じて動的に変更することも可能
-const categoryCode = 'system' // 固定値。必要に応じて動的に変更することも可能
-
-
 onMounted(async () => {
   const multiQueryResult = await dataStore.dbAccessWithMultiTags({
     category: {
       SQLTAG: 'masters.get_item_category',
-      category_code: categoryCode,
+      category_code: 'staffs',
       enabled: 'active',
     },
     dictionary: {
       SQLTAG: 'masters.get_item_dictionary',
-      category_code: categoryCode,
+      category_code: 'staffs',
       enabled: 'active',
     },
   })

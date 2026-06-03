@@ -76,9 +76,7 @@ async function submit() {
   saving.value = true
   try {
     const params = buildSaveParams(formData.value, props.tabConfig, props.commonParams)
-    // 標準的な保存処理。必要に応じて buildSaveParams 内でループ処理を組み込むことも可能
-    const result = await dataStore.runSave(props.sqltags.save, params)
-
+    const result = await dataStore.saveData(props.sqltags.save, params)
     emit('saved', result)
     emit('submit', formData.value)
   } catch (error) {

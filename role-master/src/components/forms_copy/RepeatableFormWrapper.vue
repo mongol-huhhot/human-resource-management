@@ -1,4 +1,60 @@
 <!-- RepeatableFormWrapper.vue -->
+<template>
+  <div>
+    <div class="d-flex justify-end mb-3">
+      <v-btn
+        color="success"
+        variant="outlined"
+        :loading="saving"
+        :disabled="!modelValue?.length || !props.sqltags?.save"
+        @click="saveAll"
+      >
+        一括保存
+      </v-btn>
+    </div>
+
+    <v-card
+      v-for="(item, index) in modelValue"
+      :key="item.__uuid || item.staff_bank_account_id || item.id || index"
+      class="mb-4"
+      variant="outlined"
+    >
+      <v-card-title>
+        {{ label }} {{ index + 1 }}
+
+        <v-spacer />
+
+        <v-btn
+          icon="mdi-delete"
+          variant="text"
+          color="error"
+          :loading="deletingIndex === index"
+          @click="remove(index, item)"
+        />
+      </v-card-title>
+
+      <v-card-text>
+        <DynamicVuetifyForm
+          v-model="modelValue[index]"
+          :fields="children"
+          :show-submit="false"
+          :sqltags="props.sqltags"
+          :tab-config="props.tabConfig"
+          :common-params="props.commonParams"
+        />
+      </v-card-text>
+    </v-card>
+
+    <v-btn
+      color="primary"
+      variant="outlined"
+      @click="add"
+    >
+      {{ addButtonText || '追加' }}
+    </v-btn>
+  </div>
+</template>
+
 <script setup>
 import { ref } from 'vue'
 import DynamicVuetifyForm from './DynamicVuetifyForm.vue'
@@ -58,7 +114,7 @@ async function saveAll() {
       props.commonParams,
     )
 
-    const result = await dataStore.runSave(
+    const result = await dataStore.saveData(
       props.sqltags.save,
       params,
     )
@@ -80,7 +136,7 @@ async function remove(index, item) {
     deletingIndex.value = index
 
     try {
-      const result = await dataStore.runSave(
+      const result = await dataStore.saveData(
         props.sqltags.delete,
         {
           ...props.commonParams,
@@ -104,60 +160,3 @@ async function remove(index, item) {
   emit('update:modelValue', copied)
 }
 </script>
-
-<template>
-  <div>
-    <div class="d-flex justify-end mb-3">
-      <v-btn
-        color="success"
-        variant="outlined"
-        :loading="saving"
-        :disabled="!modelValue?.length || !props.sqltags?.save"
-        @click="saveAll"
-      >
-        一括保存
-      </v-btn>
-    </div>
-
-    <v-card
-      v-for="(item, index) in modelValue"
-      :key="item.__uuid || item.staff_bank_account_id || item.id || index"
-      class="mb-4"
-      variant="outlined"
-    >
-      <v-card-title>
-        {{ label }} {{ index + 1 }}
-
-        <v-spacer />
-
-        <v-btn
-          icon="mdi-delete"
-          variant="text"
-          color="error"
-          :loading="deletingIndex === index"
-          @click="remove(index, item)"
-        />
-      </v-card-title>
-
-      <v-card-text>
-        <DynamicVuetifyForm
-          v-model="modelValue[index]"
-          :fields="children"
-          :show-submit="false"
-          :sqltags="props.sqltags"
-          :tab-config="props.tabConfig"
-          :common-params="props.commonParams"
-        />
-      </v-card-text>
-    </v-card>
-
-    <v-btn
-      color="primary"
-      variant="outlined"
-      @click="add"
-    >
-      {{ addButtonText || '追加' }}
-    </v-btn>
-  </div>
-</template>
-

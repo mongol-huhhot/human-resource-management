@@ -42,15 +42,6 @@ export const useDataStore = defineStore("dataStore", () => {
         return await baseStore.save(sql_tag, p)
     }
 
-    // 標準データ一覧
-    const get_list = async (p = {}) => {
-        return await runLoad(CONST_DEF.get_list, p,  'users.get_user_master')
-    }
-
-    // 標準データ保存機能
-    const save_data = async (p) => {
-        return await baseStore.save(CONST_DEF.save_data, p)
-    }
 
     async function rowCliked(v) {
         states.currentRow = v?.data || null
@@ -103,10 +94,7 @@ export const useDataStore = defineStore("dataStore", () => {
         rowCliked,
         runLoad,
         runSave,
-
-        get_list,
-        save_data,
-
+        
         // build AG Grid columns on-demand
         buildColumnsDefine,
 

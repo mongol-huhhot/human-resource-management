@@ -167,20 +167,27 @@ export const useFileStore = defineStore('fileStore', () => {
     return json.COMMON.result
   }
 
-  const uploadFile = async (file, category = 'default', options = {}) => {
+  const uploadFile = async (file, params = {}, options = {}) => {
     if (!file) {
       notice('ファイルを選択してください。', 'warning')
       return null
     }
 
     try {
+      const uploadParams = {
+        category: params.category || 'default',
+        owner_type: params.owner_type || 'common',
+        owner_id: params.owner_id || 'none',
+        file_kind: params.file_kind || 'default',
+      }
+
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('category', category)
 
       const json = await access({
         method: 'POST',
         action: 'upload',
+        params: uploadParams,
         formData,
         loading: options.loading ?? true,
         loadingText: options.loadingText ?? 'アップロード中です...',
@@ -199,24 +206,28 @@ export const useFileStore = defineStore('fileStore', () => {
     }
   }
 
-  const loadFiles = async (category = null, options = {}) => {
+  const loadFiles = async (params = {}, options = {}) => {
     try {
-      const params = {}
+      const searchParams = {}
 
-      if (category) {
-        params.category = category
+      if (typeof params === 'string') {
+        searchParams.category = params
+      } else {
+        if (params.category) searchParams.category = params.category
+        if (params.owner_type) searchParams.owner_type = params.owner_type
+        if (params.owner_id) searchParams.owner_id = params.owner_id
+        if (params.file_kind) searchParams.file_kind = params.file_kind
       }
 
       const json = await access({
         method: 'GET',
         action: 'list',
-        params,
+        params: searchParams,
         loading: options.loading ?? true,
         loadingText: options.loadingText ?? 'ファイル一覧を取得中です...',
       })
 
       const result = unwrap(json)
-
       files.value = Array.isArray(result) ? result : []
 
       return files.value
@@ -225,7 +236,7 @@ export const useFileStore = defineStore('fileStore', () => {
       return null
     }
   }
-
+  
   const getPreviewUrl = async (fileUuid, options = {}) => {
     try {
       const json = await access({

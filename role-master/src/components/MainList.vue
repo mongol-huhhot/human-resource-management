@@ -26,11 +26,11 @@ configStore.loadFromWindow()
 
 
 const config = computed(() => configStore.MAIN_CONFIG)
-console.log("config.value===", config.value)
+// console.log("config.value===", config.value)
 const sqlconfig = computed(() => config.value.tab2sqltag_list)
-console.log("sqlconfig.value===", sqlconfig.value)
+// console.log("sqlconfig.value===", sqlconfig.value)
 const default_list = computed(() => config.value.default_list)
-console.log("default_list.value===", default_list.value)
+// console.log("default_list.value===", default_list.value)
 /**
 user: {
   label: 'ユーザー情報',
@@ -44,8 +44,8 @@ user: {
 const default_list_config = computed(() => sqlconfig.value?.[default_list.value]) 
 const default_sqltag = computed(() => default_list_config.value?.sqltags?.select)
 
-console.log("default_list_config.value===", default_list_config.value)
-console.log("default_sqltag.value===", default_sqltag.value)
+// console.log("default_list_config.value===", default_list_config.value)
+// console.log("default_sqltag.value===", default_sqltag.value)
 
 const showDeleted = ref(false)
 const selectedVisibleColumnCount = ref(0)
@@ -121,10 +121,7 @@ watch(
 
 const loadData = async () => {
   let val = await dataStore.runLoad(default_sqltag.value, { }, default_sqltag.value)
-  console.log("raw data===", val)
-  // val = val?.[0]?.result || []
   rows.value = val
-  // rows.value = parseAndFlattenJsonbFields(val, ['profile_jsonb'])
   await nextTick()
 }
 
@@ -185,7 +182,7 @@ watch(
 
 const handleRowClick = (event) => {
   dataStore.states.currentRow = event.data
-  console.log("dataStore.states.currentRow=====", dataStore.states.currentRow)
+  // console.log("dataStore.states.currentRow=====", dataStore.states.currentRow)
 }
 
 const gridColumns = computed(() => {
@@ -344,7 +341,7 @@ async function handleDownload() {
     <v-card-title>
       <div class="d-flex align-center flex-wrap ga-3">
         <h4>
-          個人情報管理
+          権限管理
         </h4>
         <!-- {{ configStore.MAIN_CONFIG }} -->
         <a
@@ -375,7 +372,7 @@ async function handleDownload() {
         <div class="box_header">
           <CSVUpload
             v-model:openCSV="openCSV"
-            title="変動データCSV"
+            title="CSV"
             :disabled="readOnly"
           />
 
@@ -391,7 +388,7 @@ async function handleDownload() {
                 style="margin-left:1dvh; margin-top:4px;"
                 @click="handleDownload"
               >
-                月額変更届
+                CSV出力
               </v-btn>
             </template>
           </v-tooltip>

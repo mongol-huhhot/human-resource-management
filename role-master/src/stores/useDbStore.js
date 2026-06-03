@@ -22,16 +22,11 @@ import { showLoading, hideLoading } from '@/utils/loadingService'
  *  - showLoading / hideLoading を直接使用
  */
 export const useDbStore = defineStore('dbStore', () => {
-  // const RETURN = 1
-  // const RESULT_TYPE = 1
-  // const QUERY_TYPE = 2
   const DEFAULT_RETURN = 1
   const DEFAULT_RESULT_TYPE = 1
   const DEFAULT_QUERY_TYPE = 2
   const DEFAULT_TID = 'premier'
   const DEFAULT_SQL_PATH = 'showcase/entrance.sql'
-
-  // const tenantId = computed(() => detectTid() || DEFAULT_TID)
 
   const commonConstants = reactive({
     TRANSACTION_URL: '/dataEngine/v5/handleRequest/requestHandler.php',
@@ -44,7 +39,6 @@ export const useDbStore = defineStore('dbStore', () => {
     RETURN: DEFAULT_RETURN,
     RESULT_TYPE: DEFAULT_RESULT_TYPE,
     QUERY_TYPE: DEFAULT_QUERY_TYPE,
-    // SQL_PATH: `${tenantId.value}/${DEFAULT_SQL_PATH}`,
     SQL_PATH: '',
     tid: DEFAULT_TID,
   })
@@ -390,8 +384,6 @@ export const useDbStore = defineStore('dbStore', () => {
   const excecuteMultiQuery = executeMultiQuery
   const save = execute
 
-  // const setTenantId = (tid) => { if (tid) commonParams.tid = String(tid) }
-  // const setSQLPath = (sqlPath) => { commonParams.SQL_PATH = sqlPath || '' }
   const uniqueId = (prefix = '') => `${prefix}${prefix ? '_' : ''}${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   // init()
@@ -410,11 +402,6 @@ export const useDbStore = defineStore('dbStore', () => {
     getToken,
     saveToken,
     clearToken,
-
-    // config
-    // setTenantId,
-    // setSQLPath,
-
     // DB core
     dbAccess,
     dbAccessWithMultiTags,

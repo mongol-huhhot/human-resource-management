@@ -1,12 +1,16 @@
-<!-- S3FileManager.vue -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useFileStore } from '@/stores/useFileStore'
+
+const fileStore = useFileStore()
 
 const headers = [
   { title: 'Preview', key: 'thumbnailUrl', sortable: false },
   { title: 'File_uuid', key: 'file_uuid' },
   { title: 'Category', key: 'category' },
+  { title: 'Owner_type', key: 'owner_type' },
+  { title: 'Owner_id', key: 'owner_id' },
+  { title: 'File_kind', key: 'file_kind' },
   { title: 'Original_name', key: 'original_name' },
   { title: 'Mime_type', key: 'mime_type' },
   { title: 'File_size', key: 'file_size' },
@@ -15,23 +19,46 @@ const headers = [
   { title: '操作', key: 'actions', sortable: false },
 ]
 
-const fileStore = useFileStore()
-
-console.log(fileStore.files)
-
 const category = ref('staff/profile')
+const ownerType = ref('staff')
+const ownerId = ref('staff_11111')
+const fileKind = ref('thumbnail')
 const selectedFile = ref(null)
+
+const makeFileParams = () => ({
+  category: category.value,
+  owner_type: ownerType.value,
+  owner_id: ownerId.value,
+  file_kind: fileKind.value,
+})
 
 const onFileChange = (event) => {
   selectedFile.value = event.target.files?.[0] || null
 }
 
+const loadFiles = async () => {
+  await fileStore.loadFiles(makeFileParams())
+
+  for (const file of fileStore.files) {
+    if (file.mime_type?.startsWith('image/')) {
+      const preview = await fileStore.getPreviewUrl(file.file_uuid, {
+        loading: false,
+      })
+
+      file.thumbnailUrl = preview?.url || null
+    }
+  }
+}
+
 const upload = async () => {
-  const result = await fileStore.uploadFile(selectedFile.value, category.value)
+  const result = await fileStore.uploadFile(
+    selectedFile.value,
+    makeFileParams(),
+  )
 
   if (result) {
     selectedFile.value = null
-    await fileStore.loadFiles(category.value)
+    await loadFiles()
   }
 }
 
@@ -53,38 +80,11 @@ const remove = async (fileUuid) => {
   const ok = await fileStore.softDeleteFile(fileUuid)
 
   if (ok) {
-    await fileStore.loadFiles(category.value)
+    await loadFiles()
   }
 }
 
-const formatSize = (size) => {
-  if (!size) return '-'
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
-  return `${(size / 1024 / 1024).toFixed(1)} MB`
-}
-
-onMounted(() => {
-  // fileStore.loadFiles(category.value)
-  loadFiles()
-})
-
-const loadFiles = async () => {
-  await fileStore.loadFiles(category.value)
-
-  for (const file of fileStore.files) {
-    if (file.mime_type?.startsWith('image/')) {
-      const preview = await fileStore.getPreviewUrl(file.file_uuid, {
-        loading: false,
-      })
-
-      file.thumbnailUrl = preview?.url || null
-    }
-  }
-
-  console.log('with thumbnail=', fileStore.files)
-}
-
+onMounted(loadFiles)
 </script>
 
 <template>
@@ -92,14 +92,10 @@ const loadFiles = async () => {
     <h3>S3ファイル管理</h3>
 
     <div class="toolbar">
-      <label>
-        カテゴリ：
-        <input
-          v-model="category"
-          type="text"
-          placeholder="staff/profile"
-        />
-      </label>
+      <input v-model="category" placeholder="category" />
+      <input v-model="ownerType" placeholder="owner_type" />
+      <input v-model="ownerId" placeholder="owner_id" />
+      <input v-model="fileKind" placeholder="file_kind" />
 
       <button @click="reload">
         再読込
@@ -107,31 +103,19 @@ const loadFiles = async () => {
     </div>
 
     <div class="upload-box">
-      <input
-        type="file"
-        @change="onFileChange"
-      />
+      <input type="file" @change="onFileChange" />
 
-      <button
-        :disabled="!selectedFile"
-        @click="upload"
-      >
+      <button :disabled="!selectedFile" @click="upload">
         アップロード
       </button>
     </div>
 
-    <!-- {{ fileStore.files }} -->
     <v-data-table
       :headers="headers"
       :items="fileStore.files"
     >
-      <!-- サムネイル / アイコン -->
       <template #item.thumbnailUrl="{ item }">
-        <v-avatar
-          size="48"
-          rounded
-          color="grey-lighten-3"
-        >
+        <v-avatar size="48" rounded color="grey-lighten-3">
           <v-img
             v-if="item.mime_type?.startsWith('image/') && item.thumbnailUrl"
             :src="item.thumbnailUrl"
@@ -161,21 +145,12 @@ const loadFiles = async () => {
         </v-avatar>
       </template>
 
-      <!-- 操作ボタン -->
       <template #item.actions="{ item }">
-        <v-btn
-          size="small"
-          variant="text"
-          @click="preview(item.file_uuid)"
-        >
+        <v-btn size="small" variant="text" @click="preview(item.file_uuid)">
           表示
         </v-btn>
 
-        <v-btn
-          size="small"
-          variant="text"
-          @click="download(item.file_uuid)"
-        >
+        <v-btn size="small" variant="text" @click="download(item.file_uuid)">
           DL
         </v-btn>
 
@@ -196,31 +171,14 @@ const loadFiles = async () => {
 .s3-file-manager {
   padding: 16px;
 }
-
-.toolbar,
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
 .upload-box {
   display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.file-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.file-table th,
-.file-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-.file-table th {
-  background: #f5f5f5;
-}
-
-button {
-  margin-right: 6px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 </style>

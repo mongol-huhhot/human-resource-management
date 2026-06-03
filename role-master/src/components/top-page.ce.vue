@@ -7,9 +7,9 @@ import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 
 import { watch } from 'vue'
-// import MainLayout from '@/components/MainLayout.vue'
+import MainLayout from '@/components/MainLayout.vue'
 
-import S3FileManager from '@/components/files/S3FileManager.vue'
+// import S3FileManager from '@/components/files/S3FileManager.vue'
 
 import { useDataStore } from '@/stores/DataStore'
 
@@ -72,7 +72,8 @@ async function login() {
 <template>
   <v-locale-provider locale="ja">
     <div v-if="props.j">
-      <S3FileManager />
+      <MainLayout />
+      <!-- <S3FileManager /> -->
     </div>
 
     <div v-else>
