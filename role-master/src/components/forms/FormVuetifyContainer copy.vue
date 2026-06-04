@@ -24,53 +24,41 @@ const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {}
 // タブデータをロードする際のカテゴリコード。必要に応じて動的に変更することも可能
 const categoryCode = 'system' // 固定値。必要に応じて動的に変更することも可能
 
-// onMounted(async () => {
-//   const multiQueryResult = await dataStore.dbAccessWithMultiTags({
-//     category: {
-//       SQLTAG: 'masters.get_item_category',
-//       category_code: categoryCode,
-//       enabled: 'active',
-//     },
-//     dictionary: {
-//       SQLTAG: 'masters.get_item_dictionary',
-//       category_code: categoryCode,
-//       enabled: 'active',
-//     },
-//     roles: {
-//       SQLTAG: 'system.get_roles',
-//       enabled: 'active',
-//     },
-//     apps: {
-//       SQLTAG: 'system.get_apps',
-//       enabled: 'active',
-//     },
-//   })
-
-//   // console.log('Loaded multi-query data:', multiQueryResult)
-
-//   if (multiQueryResult.code !== 0) {
-//     console.error('Failed to load data:', multiQueryResult.message)
-//     return
-//   }
-
-//   // console.log('Loaded category data:', multiQueryResult.data?.category)
-//   category.value = normalizeCategoryRows(multiQueryResult.data?.category || [])
-
-//   // console.log('Loaded dictionary data:', multiQueryResult.data?.dictionary)
-//   dictionary.value = parseJsonbFields(
-//     multiQueryResult.data?.dictionary || [],
-//     ['field_definition', 'item_description', 'formula']
-//   )
-// })
-
-// const dataStore = useDataStore()
 onMounted(async () => {
-  await dataStore.loadFormMasters(categoryCode)
+  const multiQueryResult = await dataStore.dbAccessWithMultiTags({
+    category: {
+      SQLTAG: 'masters.get_item_category',
+      category_code: categoryCode,
+      enabled: 'active',
+    },
+    dictionary: {
+      SQLTAG: 'masters.get_item_dictionary',
+      category_code: categoryCode,
+      enabled: 'active',
+    },
+    roles: {
+      SQLTAG: 'system.get_roles',
+      enabled: 'active',
+    },
+    apps: {
+      SQLTAG: 'system.get_apps',
+      enabled: 'active',
+    },
+  })
 
-  category.value = normalizeCategoryRows(dataStore.formMasters?.category || [])
+  // console.log('Loaded multi-query data:', multiQueryResult)
 
+  if (multiQueryResult.code !== 0) {
+    console.error('Failed to load data:', multiQueryResult.message)
+    return
+  }
+
+  // console.log('Loaded category data:', multiQueryResult.data?.category)
+  category.value = normalizeCategoryRows(multiQueryResult.data?.category || [])
+
+  // console.log('Loaded dictionary data:', multiQueryResult.data?.dictionary)
   dictionary.value = parseJsonbFields(
-    dataStore.formMasters?.dictionary || [],
+    multiQueryResult.data?.dictionary || [],
     ['field_definition', 'item_description', 'formula']
   )
 })
@@ -201,11 +189,12 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
     [tabCode]: {
       SQLTAG:
         tabSqlTags.value[tabCode]?.sqltags?.select ||
-        tabSqlTags.value[tabCode]?.sqltag,
-        category_code: tabCode,
-        user_id: row.user_id || null,
-        request_id: row.request_id || null,
-      }
+        tabSqlTags.value[tabCode]?.sqltag ||
+        'staffs.get_staff_data',
+      category_code: tabCode,
+      staff_code: row?.staff_code || null,
+      staff_id: row?.staff_id || null,
+    }
   }
 
   console.log(`Loading tab data: ${tabCode} with condition`, condition)

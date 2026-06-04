@@ -9,8 +9,8 @@ export const useDataStore = defineStore("dataStore", () => {
     const baseStore = useDbStore();
 
     const CONST_DEF = {
-        get_list: 'masters.get_roles',
-        save_data: 'masters.save_roles',
+        // get_list: 'masters.get_roles',
+        // save_data: 'masters.save_roles',
     }
 
     const states = reactive({
@@ -21,7 +21,7 @@ export const useDataStore = defineStore("dataStore", () => {
     })
 
     const data = reactive({
-        'get_roles': [],        
+        // 'get_roles': [],        
     })
 
     const params = reactive({
@@ -86,22 +86,88 @@ export const useDataStore = defineStore("dataStore", () => {
         }
     }
 
+    const formMasters = reactive({
+        category: [],
+        dictionary: [],
+        roles: [],
+        apps: [],
+        loading: false,
+        loadedCategoryCode: null,
+    })
+
+    const loadFormMasters = async (categoryCode) => {
+        if (!categoryCode) return null
+
+        formMasters.loading = true
+
+        try {
+            const ret = await dbAccessWithMultiTags({
+                category: {
+                    SQLTAG: 'masters.get_item_category',
+                    category_code: categoryCode,
+                    enabled: 'active',
+                },
+                dictionary: {
+                    SQLTAG: 'masters.get_item_dictionary',
+                    category_code: categoryCode,
+                    enabled: 'active',
+                },
+                roles: {
+                    SQLTAG: 'system.get_roles',
+                    enabled: 'active',
+                },
+                apps: {
+                    SQLTAG: 'system.get_apps',
+                    enabled: 'active',
+                },
+                apps: {
+                    SQLTAG: 'system.get_apps',
+                    enabled: 'active',
+                },
+            })
+
+            if (ret.code !== 0) {
+            console.error('loadFormMasters failed:', ret.message)
+            return ret
+            }
+
+            formMasters.category = ret.data?.category || ret.result?.category?.result || []
+            formMasters.dictionary = ret.data?.dictionary || ret.result?.dictionary?.result || []
+            formMasters.roles = ret.data?.roles || ret.result?.roles?.result || []
+            formMasters.apps = ret.data?.apps || ret.result?.apps?.result || []
+            formMasters.loadedCategoryCode = categoryCode
+
+            return ret
+        } finally {
+            formMasters.loading = false
+        }
+    }
+
     return {
         states,
         params,
         data,
+        formMasters,
 
         rowCliked,
-        runLoad,
         runSave,
-        
-        // build AG Grid columns on-demand
+        runLoad,
+
         buildColumnsDefine,
+
+        // get_user_master,
+        // get_item_category,
+        // get_item_dictionary,
+        // get_user_register,
+        // get_staff_profile,
 
         login,
         logout,
-        verify, 
+        verify,
         multiQuery,
         dbAccessWithMultiTags,
+
+        loadFormMasters,
     }
 })
+

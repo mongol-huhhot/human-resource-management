@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onBeforeMount,  } from "vue";
-import Dashboard from "./Dashboard.vue";
+// import Dashboard from "./Dashboard.vue";
+// import Dashboard from "./AttendanceDashboard.vue";
+import Dashboard from "./AttendanceDashboard2.vue";
 // import IdentityFrom from "./UserForm.vue";
 // import 'splitpanes/dist/splitpanes.css';
 import { useDataStore } from "@/stores/DataStore";

@@ -2,7 +2,6 @@
 <script setup>
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
-
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 

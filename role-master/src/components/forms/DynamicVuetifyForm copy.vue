@@ -159,32 +159,12 @@ function getFieldItems(field) {
           :type="field.component === 'v-date-input' ? undefined : field.type"
           :readonly="field.readonly"
           :disabled="disabled || field.disabled"
-          :items="getFieldItems(field)"
-          :item-title="field.props?.itemTitle || field.props?.['item-title'] || 'label'"
-          :item-value="field.props?.itemValue || field.props?.['item-value'] || 'value'"
-          :rules="buildRules(field)"
-          @update:model-value="value => updateField(field, value)"
-        />
-<!-- 
-        <component
-          :is="field.component || 'v-text-field'"
-          :model-value="
-            field.component === 'v-date-input' || field.type === 'date'
-              ? toDisplayValue(field, formData[field.key])
-              : formData[field.key]
-          "
-          v-bind="field.props || {}"
-          :label="field.label"
-          :type="field.component === 'v-date-input' ? undefined : field.type"
-          :readonly="field.readonly"
-          :disabled="disabled || field.disabled"
           :items="field.items || field.props?.items || []"
           :item-title="field.props?.itemTitle || field.props?.['item-title'] || 'label'"
           :item-value="field.props?.itemValue || field.props?.['item-value'] || 'value'"
           :rules="buildRules(field)"
           @update:model-value="value => updateField(field, value)"
-        /> -->
-
+        />
       </v-col>
     </v-row>
 
