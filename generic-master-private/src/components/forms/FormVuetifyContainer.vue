@@ -34,6 +34,11 @@ onMounted(async () => {
       category_code: 'staffs',
       enabled: 'active',
     },
+    roles: {
+      SQLTAG: 'system.get_roles',
+      enabled: 'active',
+    },
+    
   })
 
   console.log('Loaded multi-query data:', multiQueryResult)

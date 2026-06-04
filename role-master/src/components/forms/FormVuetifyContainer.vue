@@ -142,10 +142,10 @@ const currentStaffRow = computed(() => {
 const commonParams = computed(() => {
   const row = currentStaffRow.value || {}
 
+  console.log('Computing commonParams with currentStaffRow:', row)
   return {
-    staff_id: row.staff_id || null,
-    staff_code: row.staff_code || row.user_id || null,
     user_id: row.user_id || null,
+    user_name: row.user_name 
   }
 })
 
@@ -267,8 +267,8 @@ watch(
     <v-card-title class="card-header">
       <div class="header-left truncated">
         <span v-if="currentStaffRow" class="staff-title">
-          {{ commonParams.staff_code }} -
-          {{ getStaffName(currentStaffRow) }}様
+          {{ commonParams.user_id }} -
+          {{ commonParams.user_name }} 様
         </span>
       </div>
     </v-card-title>

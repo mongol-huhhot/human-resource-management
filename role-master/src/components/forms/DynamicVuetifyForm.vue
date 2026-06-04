@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useDataStore } from '@/stores/DataStore'
-import { buildSaveParams } from '@/composables/formParamBuilder'
+// import { buildSaveParams } from '@/composables/formParamBuilder'
 import { buildRules } from '@/composables/useRuleFactory'
 
 const props = defineProps({
@@ -75,9 +75,15 @@ async function submit() {
   }
   saving.value = true
   try {
-    const params = buildSaveParams(formData.value, props.tabConfig, props.commonParams)
+    // const params = buildSaveParams(formData.value, props.tabConfig, props.commonParams)
     // 標準的な保存処理。必要に応じて buildSaveParams 内でループ処理を組み込むことも可能
-    const result = await dataStore.runSave(props.sqltags.save, params)
+    formData.value.request_data = {
+      ...formData.value,
+    }
+
+    console.log("formData.value:", formData.value);
+
+    const result = await dataStore.runSave(props.sqltags.save, formData.value, props.commonParams)
 
     emit('saved', result)
     emit('submit', formData.value)
@@ -129,3 +135,4 @@ async function submit() {
     </v-row>
   </v-form>
 </template>
+
