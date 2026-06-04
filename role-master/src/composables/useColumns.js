@@ -52,9 +52,15 @@ export function buildInitColumns(onRowClicked) {
             onCellClicked: onRowClicked || undefined,
             flex:1,
         },
-        // { field: 'password', headerName: 'パスワード',},
-        { field: 'draft_status', headerName: 'ステータス',},
-        { field: 'draft_effective_date', headerName: '変更適用日',},
+        { field: 'auth_type', headerName: '認証方式' },
+        { field: 'user_name', headerName: 'ユーザー表示名' },
+        { field: 'status', headerName: 'ステータス' },
+        { field: 'email_verified', headerName: 'メール確認' },
+        { field: 'valid_from', headerName: '有効期限開始' },
+        { field: 'valid_to', headerName: '有効期限終了' },
+        { field: 'request_type', headerName: 'リクエストタイプ' },
+        { field: 'request_status', headerName: 'リクエストステータス' },
+        { field: 'remarks', headerName: '備考' },
     ]
 }
 

@@ -10,7 +10,7 @@ window.appConfig.MAIN_CONFIG = {
       data_key: 'userdata',
       jsonb_fields: ['current_data','draft_data'],// jsonb カラムの一覧
       skip_reload: true,
-      sqltags:{ select:'system.get_users', save:'system.save_user_roles', delete:'system.delete_user_role' },
+      sqltags:{ select:'system.get_users', save:'system.save_user_request', delete:'system.delete_user_request', approve:'system.approve_user_request'}, // jsonb以外の普通カラム
       separate_items: [ 'id', 'user_id', 'email', "password", 'draft_status', "draft_effective_date" ],// jsonb以外の普通カラム
     },
     user_roles: { 
