@@ -68,7 +68,8 @@ export const useDataStore = defineStore("dataStore", () => {
         return cols
     }
 
-    const login = async (p = {}) =>  await baseStore.login('authenticate.login', p)
+    // const login = async (sqltag, params = {}, options = {}, SQL_PATH = null) => {
+    const login = async (p = {}, options = {}, SQL_PATH = null) => await baseStore.login('authenticate.login', p, options, SQL_PATH)
     const logout = async (p = {}) =>  await baseStore.logout(p)
     const verify = async (p = {}) =>  await baseStore.verify(p)
     const multiQuery = async (blocks = {}, options = {}) => baseStore.multiQuery(blocks, options)

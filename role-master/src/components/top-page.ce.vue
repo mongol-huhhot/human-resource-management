@@ -1,15 +1,6 @@
-<!-- top-page.ce.vue -->
 <script setup>
-import 'vuetify/styles'
-import '@mdi/font/css/materialdesignicons.css'
-import 'ag-grid-community/styles/ag-grid.css'
-import 'ag-grid-community/styles/ag-theme-alpine.css'
-
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import MainLayout from '@/components/MainLayout.vue'
-
-// import S3FileManager from '@/components/files/S3FileManager.vue'
-
 import { useDataStore } from '@/stores/DataStore'
 
 const props = defineProps({
@@ -24,16 +15,24 @@ const props = defineProps({
 })
 
 const dataStore = useDataStore()
+const loginReady = ref(false)
+
+const isLocalDev = () => {
+  return window.location.hostname === 'localhost' ||
+         window.location.hostname === '127.0.0.1'
+}
 
 watch(
   () => props.j,
   async () => {
+    loginReady.value = false
+
     if (!props.j) return
 
     let p = props.j
 
     try {
-      if (props.j && typeof props.j === 'string') {
+      if (typeof props.j === 'string') {
         p = JSON.parse(props.j.replace(/&quot;/g, '"'))
       }
     } catch (e) {
@@ -43,11 +42,26 @@ watch(
 
     dataStore.params.attributes = p
 
-    const result = await login();
+    if (isLocalDev()) {
+      const result = await devLogin()
 
-    // await dataStore.get_user_register({
-    //    user_id: p.user_id,
-    // })
+      console.log('Dev login result:', result)
+      console.log('token local:', localStorage.getItem('token'))
+      console.log('token session:', sessionStorage.getItem('token'))
+
+      loginReady.value =
+        result?.code === 0 &&
+        !!(localStorage.getItem('token') || sessionStorage.getItem('token'))
+
+      return
+    }
+
+    // 通常環境：全体ログインに頼る
+    const verified = await dataStore.verify({
+      loading: false,
+    })
+
+    loginReady.value = !!verified
   },
   {
     deep: true,
@@ -55,24 +69,26 @@ watch(
   }
 )
 
-// select * from user_schema.check_user(<%user%>, <%password%>)
-async function login() {
-  const result = await dataStore.login({
-    user: 'its@janga.co.jp',
-    password: 'janga1',
-  },{remember: true})
-
-  console.log('Login result:', result)
-  return result
+async function devLogin() {
+  return await dataStore.login(
+    {
+      user: import.meta.env.VITE_DEV_LOGIN_USER || 'its@janga.co.jp',
+      password: import.meta.env.VITE_DEV_LOGIN_PASSWORD || 'janga1',
+    },
+    {
+      persist: true,
+      loading: true,
+    }
+  )
 }
-
 </script>
 
 <template>
   <v-locale-provider locale="ja">
-    <div v-if="props.j">
-      <MainLayout />
-      <!-- <S3FileManager /> -->
+    <MainLayout v-if="props.j && loginReady" />
+
+    <div v-else-if="props.j">
+      認証確認中です...
     </div>
 
     <div v-else>
