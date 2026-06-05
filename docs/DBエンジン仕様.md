@@ -307,7 +307,13 @@ VALUES
 ２．このように書
 INSERT INTO shared.m_users (userid, "password", additional)
 VALUES
-    <%LOOP%>
+    [LOOP:]
+    (
+        '<%userid%>',
+        '<%password%>',
+        '<%additional%>'::jsonb
+    )
+    [/LOOP]
 ON CONFLICT (userid)
 DO UPDATE 
 SET "password" = EXCLUDED."password",
@@ -333,7 +339,13 @@ SET
     additional = updates.additional
 FROM (
     VALUES
-  <%LOOP%>
+    [LOOP:]
+    (
+        '<%userid%>',
+        '<%password%>',
+        '<%additional%>'::jsonb
+    )
+    [/LOOP]
 ) AS updates(userid, "password", additional)
 WHERE shared.m_users.userid = updates.userid;
 =>
