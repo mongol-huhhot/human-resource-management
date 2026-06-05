@@ -32,6 +32,21 @@ const f_color = (params) => {
  */
 export function buildInitColumns(onRowClicked) {
     return [
+        {
+            headerName: '',
+            colId: '__select__',
+            width: 42,
+            pinned: 'left',
+            checkboxSelection: true,
+            headerCheckboxSelection: 'multiple',
+            headerCheckboxSelectionFilteredOnly: true,
+            sortable: false,
+            filter: false,
+            resizable: false,
+            suppressHeaderMenuButton: true,
+            cellStyle: { textAlign: 'center', padding: '4px' },
+            flex:1,
+        },
         { field: 'user_id', headerName: 'ユーザーID',
             cellStyle: { textAlign: 'left', padding: '4px',
                 color: '#1976d2',          // blue

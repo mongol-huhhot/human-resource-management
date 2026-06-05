@@ -5,6 +5,7 @@ import { useAppConfigStore } from '@/stores/AppConfigStore'
 import DynamicVuetifyForm from '@/components/forms/DynamicVuetifyForm.vue'
 import RepeatableFormWrapper from '@/components/forms/RepeatableFormWrapper.vue'
 import { parseJsonbFields, parseAndFlattenJsonbFields } from '@/composables/utilFactory'
+import AppRolePermissionForm from '@/components/forms/AppRolePermissionForm.vue'
 
 const dataStore = useDataStore()
 const configStore = useAppConfigStore()
@@ -23,45 +24,6 @@ const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {}
 
 // タブデータをロードする際のカテゴリコード。必要に応じて動的に変更することも可能
 const categoryCode = 'system' // 固定値。必要に応じて動的に変更することも可能
-
-// onMounted(async () => {
-//   const multiQueryResult = await dataStore.dbAccessWithMultiTags({
-//     category: {
-//       SQLTAG: 'masters.get_item_category',
-//       category_code: categoryCode,
-//       enabled: 'active',
-//     },
-//     dictionary: {
-//       SQLTAG: 'masters.get_item_dictionary',
-//       category_code: categoryCode,
-//       enabled: 'active',
-//     },
-//     roles: {
-//       SQLTAG: 'system.get_roles',
-//       enabled: 'active',
-//     },
-//     apps: {
-//       SQLTAG: 'system.get_apps',
-//       enabled: 'active',
-//     },
-//   })
-
-//   // console.log('Loaded multi-query data:', multiQueryResult)
-
-//   if (multiQueryResult.code !== 0) {
-//     console.error('Failed to load data:', multiQueryResult.message)
-//     return
-//   }
-
-//   // console.log('Loaded category data:', multiQueryResult.data?.category)
-//   category.value = normalizeCategoryRows(multiQueryResult.data?.category || [])
-
-//   // console.log('Loaded dictionary data:', multiQueryResult.data?.dictionary)
-//   dictionary.value = parseJsonbFields(
-//     multiQueryResult.data?.dictionary || [],
-//     ['field_definition', 'item_description', 'formula']
-//   )
-// })
 
 // const dataStore = useDataStore()
 onMounted(async () => {
@@ -313,6 +275,13 @@ watch(
         >
           {{ tab.category_name }}
         </v-tab>
+        <v-tab
+          value="roles_permissions"
+        >
+          ロール権限
+        </v-tab>
+
+
       </v-tabs>
 
       <v-window v-model="activeName" class="mt-2">
@@ -354,6 +323,9 @@ watch(
               />
             </v-card-text>
           </v-card>
+        </v-window-item>
+        <v-window-item>
+          <AppRolePermissionForm/>
         </v-window-item>
       </v-window>
     </v-card-text>
