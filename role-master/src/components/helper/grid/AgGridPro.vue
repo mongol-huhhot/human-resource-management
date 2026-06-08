@@ -20,6 +20,7 @@ const emit = defineEmits([
   'filtered-changed',
   'counts-changed',
   'delete-row',
+  'selected-rows-change',
 ])
 
 const VISIBLE_COLUMNS = 'aggrid:columnVisibility'
@@ -395,6 +396,11 @@ function emitCounts() {
   })
 }
 
+function emitSelectedRows() {
+  const rows = gridApi.value?.getSelectedRows?.() || []
+  emit('selected-rows-change', rows)
+}
+
 function refreshCounts() {
   refreshSelectedRowCount()
   refreshVisibleColumnCount()
@@ -448,6 +454,7 @@ function onGridReady(params) {
     () => {
       refreshSelectedRowCount()
       emitCounts()
+      emitSelectedRows()
     }
   )
 
@@ -533,6 +540,7 @@ defineExpose({
     gridApi.value?.deselectAll()
     refreshSelectedRowCount()
     emitCounts()
+    emitSelectedRows()
   },
 })
 

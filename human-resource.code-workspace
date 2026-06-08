@@ -7,9 +7,6 @@
 			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-run/var/www/html"
 		},
 		{
-			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-run/var/www/sms_workspace/dataEngine/template"
-		},
-		{
 			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-dev/var/www/html/sms"
 		},
 		{

@@ -394,7 +394,7 @@ async function handleDownload() {
           </v-tooltip>
         </div>
 
-        <v-chip
+        <!-- <v-chip
           v-if="approvedMessage === '届済'"
           color="success"
           style="margin-top:8px; margin-left:12px;"
@@ -408,7 +408,7 @@ async function handleDownload() {
           style="margin-top:8px; margin-left:12px;"
         >
           {{ approvedMessage }}
-        </v-chip>
+        </v-chip> -->
       </div>
 
       <AgGridDataBrowser
@@ -418,6 +418,7 @@ async function handleDownload() {
         :columns="gridColumns"
         height="calc(100vh - 310px)"
         @row-click="handleRowClick"
+        @selected-rows-change="$emit('selected-rows-change', $event)"
       />
     </v-card-text>
   </v-card>

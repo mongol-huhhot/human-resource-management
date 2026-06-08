@@ -1,10 +1,10 @@
+<!-- DynamicVuetifyForm.vue -->
 <script setup>
 import { computed, ref } from 'vue'
+import { watch } from 'vue'
+import { useDefaultValueResolver } from '@/composables/useDefaultValueResolver'
 import { useDataStore } from '@/stores/DataStore'
 import { buildRules } from '@/composables/useRuleFactory'
-
-// import PermissionRuleEditor from '@/components/fields/PermissionRuleEditor.vue'
-// import ScopeRuleEditor from '@/components/fields/ScopeRuleEditor.vue'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -16,16 +16,33 @@ const props = defineProps({
   sqltags: { type: Object, default: null },
   tabConfig: { type: Object, default: () => ({}) },
   commonParams: { type: Object, default: () => ({}) },
+  selectedRows:{
+    type: Array,
+    default: ()=>[]
+  },
+  selectedUserIds:{
+    type: Array,
+    default: ()=>[]
+  },
+})
+
+
+const isBulkMode = computed(() => props.selectedUserIds.length > 1)
+
+const submitButtonText = computed(() => {
+  return isBulkMode.value ? '一括実行' : '保存'
+})
+
+const operationText = computed(() => {
+  if (operation.value === 'add') return '追加'
+  if (operation.value === 'remove') return '削除'
+  if (operation.value === 'replace') return '置換'
+  return ''
 })
 
 const emit = defineEmits(['update:modelValue', 'submit', 'saved'])
 const dataStore = useDataStore()
 const saving = ref(false)
-
-// const componentMap = {
-//   PermissionRuleEditor,
-//   ScopeRuleEditor,
-// }
 
 const formData = computed({
   get: () => props.modelValue || {},
@@ -72,18 +89,23 @@ function getColProps(field) {
   }
 }
 
-function toDisplayValue(field, value) {
-  if (field.component !== 'v-date-input' && field.type !== 'date') return value
-  if (value == null || value === '') return null
-  if (value instanceof Date) return value
+function normalizeLoadedFormData(data, fields = []) {
+  const next = { ...(data || {}) }
 
-  if (typeof value === 'string') {
-    const normalized = value.replace(/\//g, '-')
-    const d = new Date(normalized + 'T00:00:00')
-    return isNaN(d.getTime()) ? null : d
+  for (const field of fields) {
+    const key = field.key
+    if (!key) continue
+
+    if (
+      field.type === 'array' ||
+      field.db?.dataType === 'text[]' ||
+      field.props?.multiple === true
+    ) {
+      next[key] = normalizeArrayValue(next[key])
+    }
   }
 
-  return null
+  return next
 }
 
 function normalizeDateValue(value) {
@@ -207,6 +229,37 @@ function cleanProps(field) {
   }
 }
 
+function buildSaveData(data) {
+  const base = { ...(data || {}) }
+
+  const roleCodes = Array.isArray(base.role_codes)
+    ? base.role_codes.filter(Boolean)
+    : base.role_codes
+      ? [base.role_codes]
+      : []
+
+  const userIds = props.selectedUserIds?.length
+    ? props.selectedUserIds
+    : base.user_id
+      ? [base.user_id]
+      : []
+
+  const currentOperation = isBulkMode.value
+      ? (operation.value || 'add')
+      : 'replace'
+
+  return userIds.map(userId => ({
+    id: base.id || null,
+    user_id: userId,
+    role_codes: roleCodes,
+    operation: currentOperation,
+    start_date: base.start_date,
+    end_date: base.end_date,
+    enabled: base.enabled || 'active',
+    remarks: base.remarks || '',
+  }))
+}
+
 async function submit() {
   if (!props.sqltags?.save) {
     emit('submit', formData.value)
@@ -216,41 +269,91 @@ async function submit() {
   saving.value = true
 
   try {
-    const {
-      id,
-      request_id,
-      request_data,
-      source_type,
-      submitted_at,
-      submitted_by,
-      approved_at,
-      approved_by,
-      created_at,
-      updated_at,
-      ...cleanData
-    } = formData.value
-
-    const saveData = {
-      ...cleanData,
-      request_data: {
-        ...cleanData,
-      },
+    const payload = {
+      LOOP: buildSaveData(formData.value),
     }
 
     const result = await dataStore.runSave(
       props.sqltags.save,
-      saveData,
+      payload,
       props.commonParams,
     )
 
     emit('saved', result)
-    emit('submit', saveData)
-  } catch (error) {
-    console.error('DynamicVuetifyForm submit error:', error)
+    emit('submit', payload)
   } finally {
     saving.value = false
   }
 }
+
+function isSameJson(a, b) {
+  return JSON.stringify(a ?? {}) === JSON.stringify(b ?? {})
+}
+
+const { applyDefaultValues } = useDefaultValueResolver()
+
+watch(
+  () => [props.fields, props.modelValue],
+  ([fields, modelValue]) => {
+    let next = normalizeLoadedFormData(modelValue, fields)
+
+    next = applyDefaultValues(
+      next,
+      fields,
+      props.commonParams
+    )
+
+    if (!isSameJson(next, modelValue)) {
+      emit('update:modelValue', next)
+    }
+  },
+  { immediate: true }
+)
+
+function normalizeArrayValue(value) {
+  if (Array.isArray(value)) return value
+  if (value == null || value === '') return []
+
+  if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+    return value
+      .slice(1, -1)
+      .split(',')
+      .map(v => v.trim().replace(/^"|"$/g, ''))
+      .filter(Boolean)
+  }
+
+  if (typeof value === 'string' && value.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  return [value]
+} ///ddddd
+
+function toDisplayValue(field, value) {
+  if (field.type === 'array' || field.db?.dataType === 'text[]') {
+    return normalizeArrayValue(value)
+  }
+
+  if (field.component !== 'v-date-input' && field.type !== 'date') return value
+  if (value == null || value === '') return null
+  if (value instanceof Date) return value
+
+  if (typeof value === 'string') {
+    const normalized = value.replace(/\//g, '-')
+    const d = new Date(normalized + 'T00:00:00')
+    return isNaN(d.getTime()) ? null : d
+  }
+
+  return null
+}
+
+const operation = ref('add')
+
 </script>
 
 <template>
@@ -291,6 +394,40 @@ async function submit() {
       </v-col>
     </v-row>
 
+    <v-row>
+      <v-col>
+        <v-alert
+          v-if="isBulkMode"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+        >
+          対象：{{ selectedUserIds.length }}名 /
+          操作：{{ operationText }}
+        </v-alert>
+
+        <v-radio-group
+          v-if="isBulkMode"
+          v-model="operation"
+          inline
+        >
+          <v-radio color="success" label="追加" value="add" />
+          <v-radio color="warning" label="削除" value="remove" />
+          <v-radio color="error" label="置換" value="replace" />
+        </v-radio-group>
+
+        <v-alert
+          v-if="isBulkMode && operation === 'replace'"
+          type="error"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+        >
+          置換は、対象ユーザーの既存ロールを選択したロールで上書きします。
+        </v-alert>
+      </v-col>  
+    </v-row>
     <v-row v-if="showSubmit">
       <v-col cols="12" class="text-right">
         <v-btn
@@ -299,8 +436,16 @@ async function submit() {
           :loading="saving"
           :disabled="props.disabled"
         >
-          保存
-        </v-btn>
+          {{ submitButtonText }}
+        </v-btn>        
+        <!-- <v-btn
+          color="primary"
+          type="submit"
+          :loading="saving"
+          :disabled="props.disabled"
+        >
+          {{ selectedUserIds.length > 1 ? '一括実行' : '保存' }}
+        </v-btn> -->
       </v-col>
     </v-row>
   </v-form>

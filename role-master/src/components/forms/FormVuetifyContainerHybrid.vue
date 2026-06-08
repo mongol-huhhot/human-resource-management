@@ -12,6 +12,19 @@ const configStore = useAppConfigStore()
 
 configStore.loadFromWindow()
 
+const props = defineProps({
+  selectedRows: {
+    type: Array,
+    default: () => [],
+  },
+  selectedUserIds: {
+    type: Array,
+    default: () => [],
+  },
+})
+  // :selected-rows="selectedRows"
+  //       :selected-user-ids="selectedUserIds"
+
 const formData = ref({})
 const activeName = ref('')
 const category = ref([])
@@ -23,6 +36,18 @@ const loadingTabs = ref({})
 const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {})
 
 const categoryCode = 'system'
+
+const isBulkMode = computed(() => props.selectedUserIds.length > 1)
+
+const selectedUserText = computed(() => {
+  if (isBulkMode.value) {
+    return `${props.selectedUserIds.length}名選択中`
+  }
+
+  return commonParams.value.user_id
+    ? `${commonParams.value.user_id} - ${commonParams.value.user_name || ''} 様`
+    : ''
+})
 
 onMounted(async () => {
   await dataStore.loadFormMasters(categoryCode)
@@ -320,12 +345,16 @@ watch(
   <v-card class="container-card" variant="outlined">
     <v-card-title class="card-header">
       <div class="header-left truncated">
-        <span v-if="currentStaffRow" class="staff-title">
+        <!-- {{ selectedRows}} --{{ selectedUserIds }} -->
+        <!-- <span v-if="currentStaffRow" class="staff-title">
           {{ commonParams.user_id }}
           <template v-if="commonParams.user_name">
             - {{ commonParams.user_name }} 様
           </template>
-        </span>
+        </span> -->
+        <span class="staff-title">
+          {{ selectedUserText }}
+        </span>        
       </div>
     </v-card-title>
 
@@ -364,6 +393,8 @@ watch(
               {{ getTabTitle(tab) }}
             </v-card-title>
 
+              <!-- selectedRows
+              selectedUserIds -->
             <v-card-text>
               <!-- 1. 完全専用画面 -->
               <component
@@ -376,6 +407,8 @@ watch(
                 :common-params="commonParams"
                 :current-row="currentStaffRow"
                 @saved="handleSaved(tab.sub_category_code, $event)"
+                :selected-rows="props.selectedRows"
+                :selected-user-ids="props.selectedUserIds"
               />
 
               <!-- page指定だが ui_component 未設定 -->
@@ -399,6 +432,8 @@ watch(
                 :tab-config="tabSqlTags[tab.sub_category_code] || {}"
                 :common-params="commonParams"
                 @saved="handleSaved(tab.sub_category_code, $event)"
+                :selected-rows="props.selectedRows"
+                :selected-user-ids="props.selectedUserIds"
               />
 
               <!-- 3. single dictionary form -->
@@ -410,6 +445,8 @@ watch(
                 :tab-config="tabSqlTags[tab.sub_category_code] || {}"
                 :common-params="commonParams"
                 @saved="handleSaved(tab.sub_category_code, $event)"
+                :selected-rows="props.selectedRows"
+                :selected-user-ids="props.selectedUserIds"
               />
             </v-card-text>
           </v-card>

@@ -7,3 +7,14 @@
 - $uuid：uuid。自動追加
 - $ext：ファイルの拡張子 。自動追加
 
+## ローカル保存式(files カラムの構造)
+
+```json
+file
+{
+    "object_key":"$tenantId/$category/$ownerType/$ownerId/$fileKind",
+    "show_order":1,
+    "removed": true,
+}
+
+```

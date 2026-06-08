@@ -1,3 +1,4 @@
+<!-- PagedAgGridCard.vue -->
 <script setup>
 import { computed, ref } from 'vue'
 import AgGridPro from './AgGridPro.vue'
@@ -135,6 +136,7 @@ defineExpose({
         @filtered-changed="handleFilteredChanged"
         @counts-changed="handleCountsChanged"
         @delete-row="emit('delete-row', $event)"
+        @selected-rows-change="$emit('selected-rows-change', $event)"
       />
     </v-card-text>
   </v-card>

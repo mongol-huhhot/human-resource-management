@@ -1,36 +1,36 @@
-<!-- MainLayout.vue -->
 <script setup>
+import { ref, computed } from 'vue'
 import MainList from '@/components/MainList.vue'
 import FormVuetifyContainer from '@/components/forms/FormVuetifyContainerHybrid.vue'
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
 
+const selectedRows = ref([])
+
+const selectedUserIds = computed(() =>
+  selectedRows.value
+    .map(row => row.user_id)
+    .filter(Boolean)
+)
 </script>
 
 <template>
-  <!-- <v-container 
-    fluid
-    class="pa-0 main-layout-container"
-  > -->
   <Splitpanes
     ref="splitpanesRef"
     class="default-theme"
     style="height: 100%; width: 100%;"
   >
     <Pane min-size="10">
-      <MainList />
+      <MainList
+        @selected-rows-change="selectedRows = $event"
+      />
     </Pane>
 
     <Pane min-size="10">
-      <FormVuetifyContainer />
+      <FormVuetifyContainer
+        :selected-rows="selectedRows"
+        :selected-user-ids="selectedUserIds"
+      />
     </Pane>
   </Splitpanes>
-  <!-- </v-container> -->
 </template>
-
-<style scoped>
-.main-layout-container {
-  height: calc(100vh - 180px);
-  width: 100%;
-}
-</style>

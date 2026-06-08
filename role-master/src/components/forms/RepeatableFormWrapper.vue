@@ -28,6 +28,14 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  selectedRows: {
+    type: Array,
+    default: () => [],
+  },
+  selectedUserIds: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'saved', 'deleted'])
@@ -147,6 +155,8 @@ async function remove(index, item) {
           :sqltags="props.sqltags"
           :tab-config="props.tabConfig"
           :common-params="props.commonParams"
+          :selected-rows="props.selectedRows"
+          :selected-user-ids="props.selectedUserIds"
         />
       </v-card-text>
     </v-card>
