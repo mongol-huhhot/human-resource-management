@@ -1,10 +1,11 @@
 <!-- UploadImageAdvanced.vue -->
 <script setup>
-import { ref, computed, defineEmits, defineProps, defineExpose } from 'vue'
+import { ref, computed } from 'vue'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 
 const props = defineProps({
+  fileurl: { type: String },
   label: { type: String, default: 'Upload or Take Photo' },
   width: { type: Number, default: 200 },
   height: { type: Number, default: 200 },
@@ -13,6 +14,7 @@ const props = defineProps({
   identity: { type: String },
   existingImage: { type: String, default: '' },
   src: { type: String, default: '' },
+  uuid: { type: String, default: '' },
   labelPosition: { type: String, default: 'bottom' },
   // additionl properties
   compressRatio: { type: Number, default: 1 },   // 0.1 ~ 1 (e.g., 0.5 halves width/height)
@@ -21,6 +23,8 @@ const props = defineProps({
   maxWidth:     { type: Number, default: 0 },    // optional hard cap; 0 = ignore
   maxHeight:    { type: Number, default: 0 },    // optional hard cap; 0 = ignore
 })
+
+
 
 console.log("UploadImageAdvanced.vue----props===", props)
 
@@ -270,7 +274,8 @@ const deleteImage = (silent = false) => {
   if (fileGallery.value) fileGallery.value.value = ''
   rotation.value = 0
   scale.value = 1
-  if (!silent) emit('deleted', { identity: props.identity })
+  console.log("uuid==================",props.uuid)
+  if (!silent) emit('deleted', { identity: props.uuid })
 }
 
 const rotateImage = () => {

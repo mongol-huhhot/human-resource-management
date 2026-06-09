@@ -19,6 +19,21 @@ const props = defineProps({
 const dataStore = useDataStore()
 const loginReady = ref(false)
 
+//テスト用
+//本来はDBから取得したもの
+const files_info = [
+  {
+    "object_key": "staff/staff_11111/mynumber_card_front/2026/06",
+    "show_order": 1,
+    "is_removed": false
+  },
+  {
+    "object_key": "staff/staff_11111/mynumber_card_back/2026/06",
+    "show_order": 2,
+    "is_removed": false
+  }
+]
+
 const isLocalDev = () => {
   return window.location.hostname === 'localhost' ||
          window.location.hostname === '127.0.0.1'
@@ -87,8 +102,16 @@ async function devLogin() {
 
 <template>
   <v-locale-provider locale="ja">
-    <!--<S3FileManager /> -->
-    <UploadImageWrapper />
+    <!-- <UploadImageWrapper 
+          :category_code="my_number",
+          :owner_id="staff_11111"
+    /> -->
+
+    <UploadImageWrapper 
+       :owner_id="staff_11111"
+       :files_info="files_info"
+    />
     
+    <!-- <S3FileManager /> -->
   </v-locale-provider>
 </template>

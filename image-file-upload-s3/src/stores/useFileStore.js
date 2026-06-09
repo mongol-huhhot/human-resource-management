@@ -235,7 +235,7 @@ export const useFileStore = defineStore('fileStore', () => {
       const result = unwrap(json)
       files.value = Array.isArray(result) ? result : []
 
-      console.log(files.value)
+      console.log("files.value=============",files.value)
 
       return files.value
     } catch (e) {

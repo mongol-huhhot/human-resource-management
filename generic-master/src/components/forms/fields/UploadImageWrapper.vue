@@ -1,17 +1,64 @@
 <!-- UploadImageWrapper.vue -->
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, defineProps, watch, onUpdated } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, onUpdated } from 'vue'
 import UploadFile from './UploadImageAdvanced.vue'
 import { useAppConfigStore } from '@/stores/AppConfigStore'
-import { useDBConnectionStore } from '@/stores/DBConnectionStore'
+//import { useDBConnectionStore } from '@/stores/DBConnectionStore'
+import { useFileStore } from '@/stores/useFileStore'
+
+const fileStore = useFileStore()
+const fileurl = ref([])
+
+//selectedFile は、パソコンから選択したアップロード前のファイル本体を一時的に保存する場所
+const category = ref('staff/profile')
+const ownerType = ref('staff')
+const ownerId = ref('staff_11111')
+const fileKind = ref('')
+const selectedFile = ref(null)
+
+
+//入力されたテキストボックスの値をひとまとめにして、APIに送るためのオブジェクトを作る関数
+const makeFileParams = () => ({
+  category: category.value,
+  owner_type: ownerType.value,
+  owner_id: ownerId.value,
+  file_kind: fileKind.value,
+})
+
+const loadFiles = async () => {
+  await fileStore.loadFiles(makeFileParams())
+
+  for (const file of fileStore.files) {
+    if (file.mime_type?.startsWith('image/')) {
+
+      const preview = await fileStore.getPreviewUrl(file.file_uuid, {
+        loading: false,
+      })
+
+      console.log("file==", file)
+      console.log("preview==", preview)
+      file.thumbnailUrl = preview?.url || null
+
+      fileurl.value = file.thumbnailUrl
+      
+      console.log("qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq=", fileurl.value)
+      console.log(typeof thumbnailUrl)
+    }
+  }
+
+  console.log("🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴",fileurl.value)
+}
+
+
+
 
 const configStore = useAppConfigStore()
 configStore.loadFromWindow()
 
-const dbStore = useDBConnectionStore()
+//const dbStore = useDBConnectionStore()
 
 const props = defineProps({
-  category_code: { type: String, default: '' },
+  category_code: { type: String, default: 'student_card' },
   swapSizeInLandscape: { type: Boolean, default: true },
   identity: { type: String, default: '' },
   compressRatio: { type: Number, default: 1 },   // 0.1 ~ 1 (e.g., 0.5 halves width/height)
@@ -21,9 +68,22 @@ const props = defineProps({
   maxHeight:    { type: Number, default: 0 },    // optional hard cap; 0 = ignore
 })
 
+//テスト用propデータ
+//これをDBから受け取る予定
+//const props = {
+//        category_code: 'mynumber_card',
+//  swapSizeInLandscape: true,
+//             identity: '',
+//        compressRatio: 1,
+//         jpegQuality:  0.9,
+//         outputFormat: 'image/jpeg',
+//         maxWidth: 0,
+//         maxHeight:  0  
+//}
+
 // --- 重要な設定: 明示的なtidパスを保持 ---
-const tid = 'janga_vue_base_system'
-const readBlobURL = `/${tid}/dataEngine/v1/handleRequest/readImage.php`;
+//const tid = 'janga_vue_base_system'
+//const readBlobURL = `/${tid}/dataEngine/v1/handleRequest/readImage.php`;
 
 // --- Config ---
 const cfg = computed(() => (configStore.UploadFiles?.[props.category_code]) || {})
@@ -33,9 +93,14 @@ const baseHeight = computed(() => cfg.value.height)
 const returnType = computed(() => cfg.value.returnType)
 const editable = computed(() => (typeof cfg.value.editable === 'boolean' ? cfg.value.editable : true))
 
+//useFileStoreのfilesref参照
+const filesref = computed(() => fileStore.files)
+
 console.log("baseHeight, baseWidth",baseHeight.value, baseWidth.value)
 
 // --- Mobile detection ---
+//画面サイズ（レスポンシブ）の判定
+// パソコンとスマホ、あるいは画面の縦横切り替えによって、画像の並び方を自動で変えるための設定。
 const isMobile = ref(false)
 let mql = null
 
@@ -44,6 +109,7 @@ const updateIsMobile = () => {
 }
 
 onMounted(() => {
+  loadFiles()
   mql = window.matchMedia('(max-width: 768px)')
   updateIsMobile()
   if (mql.addEventListener) mql.addEventListener('change', updateIsMobile)
@@ -58,6 +124,7 @@ onBeforeUnmount(() => {
 })
 
 // --- Desktop layout mode ---
+// レイアウトと画像サイズの計算（Computed）
 const desktopMode = ref((cfg.value.direction === 'row') ? 'landscape' : 'portrait')
 
 const flexDirection = computed(() => {
@@ -82,6 +149,7 @@ const tileWidthPercent = computed(() => {
 })
 
 // --- Collect child components safely ---
+// 子コンポーネント（画像枠）の追跡管理
 const childComponents = ref([])
 
 const setChildRef = (el, index) => {
@@ -131,7 +199,9 @@ const field_key = (key) => `${props.category_code}_${key}_${props.identity}`
  */
 const imgUrl = (key) => {
   const fd = field_key(key)
-  return `${readBlobURL}?field_key=${fd}&t=${Date.now()}`
+  console.log("field_key===================",fd)
+  //return `${readBlobURL}?field_key=${fd}&t=${Date.now()}`
+  return ''
 }
 
 // --- Save All Images ---
@@ -163,18 +233,178 @@ const hasValidCroppedImage = (comp, fileConfig) => {
   return isValidDataUrl
 }
 
-/**
- * Save all images one by one
- */
+// /**
+//  * Save all images one by one
+//  */
+// //画像の一括保存処理（saveAllImages）
+// const saveAllImages = async () => {
+//   saving.value = true
+//   saveResult.value = null
+//   saveProgress.value = 0
+  
+//   await nextTick() // Ensure DOM is updated
+  
+//   try {
+//     // Collect valid images to upload
+//     const validComponents = []
+    
+//     for (let i = 0; i < files.value.length; i++) {
+//       const comp = childComponents.value[i]
+//       const fileConfig = files.value[i]
+      
+//       if (!comp) {
+//         console.warn(`⚠️ Component not found for ${fileConfig.field} at index ${i}`)
+//         continue
+//       }
+      
+//       // Check if there's a valid cropped image - with detailed logging
+//       const isValid = hasValidCroppedImage(comp, fileConfig)
+      
+//       if (isValid) {
+//         validComponents.push({ comp, fileConfig })
+//         console.log(`✅ Found valid cropped image for ${fileConfig.field}`)
+//         console.log(`   - Cropped image: ${comp.croppedImage.substring(0, 50)}...`)
+//       } else {
+//         console.log(`⏭️ Skipping ${fileConfig.field} (no valid cropped image)`)
+//       }
+//     }
+    
+//     if (validComponents.length === 0) {
+//       // Show user-friendly message
+//       saveResult.value = {
+//         type: 'info',
+//         message: '編集された画像がありません。変更を加えてから保存してください。'
+//       }
+//       console.log('ℹ️ No images to save - none were edited')
+      
+//       // Log detailed component status
+//       console.log('🔍 Detailed component status:')
+//       for (let i = 0; i < childComponents.value.length; i++) {
+//         const comp = childComponents.value[i]
+//         const fileConfig = files.value[i]
+//         if (comp) {
+//           console.log(`   - ${fileConfig.field}:`, {
+//             hasCroppedImage: !!comp.croppedImage,
+//             croppedImagePreview: comp.croppedImage ? comp.croppedImage.substring(0, 30) + '...' : 'N/A'
+//           })
+//         }
+//       }
+      
+//       return
+//     }
+    
+//     totalImages.value = validComponents.length
+//     console.log(`📸 Preparing to upload ${totalImages.value} images`)
+    
+//     const results = []
+    
+//     // Process each image individually
+//     for (let i = 0; i < validComponents.length; i++) {
+//       const { comp, fileConfig } = validComponents[i]
+      
+//       try {
+//         // Trigger manual crop if needed
+//         if (typeof comp.getCropped === 'function') {
+//           console.log(`🔄 Triggered getCropped for ${fileConfig.field}`)
+//           comp.getCropped()
+          
+//           // Wait for canvas to be ready - increased from 300ms to 500ms
+//           await new Promise(resolve => setTimeout(resolve, 500))
+//         } else {
+//           console.warn(`⚠️ getCropped method not available for ${fileConfig.field}`)
+//         }
+        
+//         // Convert base64 to Blob// 
+//         // 2. テキスト（Base64形式）になっている画像を、通信に適した「Blob（バイナリ）形式」に変換
+//         const blob = await fetchImageBlob(comp.croppedImage)
+        
+//         // Generate field key
+//         const fd = field_key(fileConfig.field)
+        
+//         // Upload the image using the uploadImage method
+//         const result = await dbStore.uploadImage(fd, blob)
+        
+//         results.push({
+//           success: true,
+//           field: fileConfig.field,
+//           result: result
+//         })
+        
+//         // Update progress
+//         saveProgress.value = Math.round((i + 1) / totalImages.value * 100)
+        
+//         console.log(`✅ Successfully uploaded image for ${fileConfig.field}`)
+//       } catch (err) {
+//         console.error(`🖼️ 画像アップロードに失敗しました ${fileConfig.field}:`, err)
+//         results.push({
+//           success: false,
+//           field: fileConfig.field,
+//           error: err.message
+//         })
+        
+//         // Update progress
+//         saveProgress.value = Math.round((i + 1) / totalImages.value * 100)
+//       }
+//     }
+    
+//     // Process results
+//     const successCount = results.filter(r => r.success).length
+//     const errorCount = results.filter(r => !r.success).length
+    
+//     if (successCount > 0) {
+//       saveResult.value = {
+//         type: 'success',
+//         message: `✅ ${successCount} 件の画像を保存しました！`,
+//         details: results
+//       }
+      
+//       // Force refresh ALL images with new timestamp
+//       const timestamp = Date.now()
+//       for (let i = 0; i < childComponents.value.length; i++) {
+//         const comp = childComponents.value[i]
+//         if (comp && files.value[i]) {
+//           const fd = field_key(files.value[i].field)
+//           comp.src = `${readBlobURL}?field_key=${fd}&t=${timestamp}`
+//           comp.croppedImage = null
+//           console.log(`🔄 Force refreshed image for ${files.value[i].field}`)
+//         }
+//       }
+//     }
+    
+//     if (errorCount > 0) {
+//       const errorMsg = saveResult.value 
+//         ? saveResult.value.message + ` (${errorCount} 件失敗)`
+//         : `❌ ${errorCount} 件の画像保存に失敗しました`
+      
+//       saveResult.value = {
+//         type: 'error',
+//         message: errorMsg,
+//         details: results.filter(r => !r.success)
+//       }
+//     }
+    
+//   } catch (err) {
+//     saveResult.value = {
+//       type: 'error',
+//       message: `❌ 保存処理中にエラーが発生しました: ${err.message}`,
+//     }
+//     console.error('💾 Save error:', err)
+//   } finally {
+//     saving.value = false
+//     totalImages.value = 0
+//   }
+// }
+
+// 画像の一括保存処理（saveAllImages）
 const saveAllImages = async () => {
   saving.value = true
   saveResult.value = null
   saveProgress.value = 0
   
-  await nextTick() // Ensure DOM is updated
+  await nextTick() // DOMの更新を確実にする
   
   try {
-    // Collect valid images to upload
+    // 1. アップロード対象（編集された画像）の抽出
     const validComponents = []
     
     for (let i = 0; i < files.value.length; i++) {
@@ -186,39 +416,23 @@ const saveAllImages = async () => {
         continue
       }
       
-      // Check if there's a valid cropped image - with detailed logging
+      // 有効な切り抜き画像があるか確認
       const isValid = hasValidCroppedImage(comp, fileConfig)
       
       if (isValid) {
         validComponents.push({ comp, fileConfig })
         console.log(`✅ Found valid cropped image for ${fileConfig.field}`)
-        console.log(`   - Cropped image: ${comp.croppedImage.substring(0, 50)}...`)
       } else {
         console.log(`⏭️ Skipping ${fileConfig.field} (no valid cropped image)`)
       }
     }
     
+    // 変更された画像が1枚もない場合は案内を出して終了
     if (validComponents.length === 0) {
-      // Show user-friendly message
       saveResult.value = {
         type: 'info',
         message: '編集された画像がありません。変更を加えてから保存してください。'
       }
-      console.log('ℹ️ No images to save - none were edited')
-      
-      // Log detailed component status
-      console.log('🔍 Detailed component status:')
-      for (let i = 0; i < childComponents.value.length; i++) {
-        const comp = childComponents.value[i]
-        const fileConfig = files.value[i]
-        if (comp) {
-          console.log(`   - ${fileConfig.field}:`, {
-            hasCroppedImage: !!comp.croppedImage,
-            croppedImagePreview: comp.croppedImage ? comp.croppedImage.substring(0, 30) + '...' : 'N/A'
-          })
-        }
-      }
-      
       return
     }
     
@@ -227,41 +441,60 @@ const saveAllImages = async () => {
     
     const results = []
     
-    // Process each image individually
+    // 2. 各画像をループ処理で順番にアップロード
     for (let i = 0; i < validComponents.length; i++) {
       const { comp, fileConfig } = validComponents[i]
       
       try {
-        // Trigger manual crop if needed
+        // 必要に応じて切り抜き（トリミング）を確定させる
         if (typeof comp.getCropped === 'function') {
           console.log(`🔄 Triggered getCropped for ${fileConfig.field}`)
           comp.getCropped()
-          
-          // Wait for canvas to be ready - increased from 300ms to 500ms
+          // Canvasの生成・描画を待つ（0.5秒）
           await new Promise(resolve => setTimeout(resolve, 500))
         } else {
           console.warn(`⚠️ getCropped method not available for ${fileConfig.field}`)
         }
         
-        // Convert base64 to Blob
+        // Base64テキスト形式の画像を、通信に適したBlob（バイナリ）形式に変換
         const blob = await fetchImageBlob(comp.croppedImage)
         
-        // Generate field key
-        const fd = field_key(fileConfig.field)
+        // -------------------------------------------------------------
+        // 新しい共通関数 `uploadFile` を呼び出すパラメータの作成
+        // ※ 既存の category_code や identity などの変数、
+        //   または props から適切な値を設定してください。
+        // -------------------------------------------------------------
+        //const uploadParams = {
+        //  category: category_code?.value || props?.category_code || 'default',
+        //  owner_type: 'common',
+        //  owner_id: identity?.value || props?.identity || 'none',
+        //  file_kind: fileConfig.field, // 各画像の識別（main_image等）に割り当て
+        //}
+//
+        // uploadFile内部で独自のトースト通知とローディングが出るため、
+        // ループ中の全画面ロックの競合を防ぐオプションを指定（必要に応じて調整）
+        //const uploadOptions = {
+          //loading: false, // saveAllImages 側で saving 管理をしているため false 推奨
+          //showSuccessMessage: false // 最後に一括でメッセージを出すため、個別通知はオフ
+        //}
         
-        // Upload the image using the uploadImage method
-        const result = await dbStore.uploadImage(fd, blob)
+        // 新しい共通関数でアップロードを実行
+        const result = await fileStore.uploadFile(
+          blob,
+          makeFileParams(),
+        )
         
-        results.push({
-          success: true,
-          field: fileConfig.field,
-          result: result
-        })
+        if (result) {
+          results.push({
+            success: true,
+            field: fileConfig.field,
+            result: result
+          })
+          console.log(`✅ Successfully uploaded image for ${fileConfig.field}`)
+        } else {
+          throw new Error('アップロード結果が空、または処理に失敗しました。')
+        }
         
-        // Update progress
-        saveProgress.value = Math.round((i + 1) / totalImages.value * 100)
-        
-        console.log(`✅ Successfully uploaded image for ${fileConfig.field}`)
       } catch (err) {
         console.error(`🖼️ 画像アップロードに失敗しました ${fileConfig.field}:`, err)
         results.push({
@@ -269,13 +502,13 @@ const saveAllImages = async () => {
           field: fileConfig.field,
           error: err.message
         })
-        
-        // Update progress
+      } finally {
+        // 進捗度（%）の計算と画面更新
         saveProgress.value = Math.round((i + 1) / totalImages.value * 100)
       }
     }
     
-    // Process results
+    // 3. アップロード結果の集計と画面リフレッシュ
     const successCount = results.filter(r => r.success).length
     const errorCount = results.filter(r => !r.success).length
     
@@ -286,19 +519,24 @@ const saveAllImages = async () => {
         details: results
       }
       
-      // Force refresh ALL images with new timestamp
-      const timestamp = Date.now()
+      // 子コンポーネントの編集状態（Base64の一時データ）をクリア
       for (let i = 0; i < childComponents.value.length; i++) {
-        const comp = childComponents.value[i]
-        if (comp && files.value[i]) {
-          const fd = field_key(files.value[i].field)
-          comp.src = `${readBlobURL}?field_key=${fd}&t=${timestamp}`
-          comp.croppedImage = null
-          console.log(`🔄 Force refreshed image for ${files.value[i].field}`)
+        if (childComponents.value[i]) {
+          childComponents.value[i].croppedImage = null
         }
       }
+      
+      // 【重要】新しい共通関数 `loadFiles` を用いて、サーバーの最新の画像状態を再取得（リフレッシュ）
+      console.log('🔄 Reloading files via loadFiles...')
+      const reloadParams = {
+        category: category_code?.value || props?.category_code || 'default',
+        owner_type: 'common',
+        owner_id: identity?.value || props?.identity || 'none'
+      }
+      await loadFiles(reloadParams, { loading: false })
     }
     
+    // 一部、または全部失敗した場合のエラーハンドリング
     if (errorCount > 0) {
       const errorMsg = saveResult.value 
         ? saveResult.value.message + ` (${errorCount} 件失敗)`
@@ -318,6 +556,7 @@ const saveAllImages = async () => {
     }
     console.error('💾 Save error:', err)
   } finally {
+    // 成功・失敗に関わらず、最後にローディング状態と進捗をリセット
     saving.value = false
     totalImages.value = 0
   }
@@ -354,16 +593,25 @@ const handleCropped = (field, cropped) => {
   }
 }
 
-const handleDeleted = async (field) => {
-  console.log("fileConfig.field====", field)
-  const response = await dbStore.deleteImage(field_key(field))
-  console.log("response====", response)
+const handleDeleted = async (event) => {
+  //console.log("fileConfig.field====", field)
+
+const ok = await fileStore.softDeleteFile(event.identity)
+
+  if (ok) {
+    await loadFiles()
+  }
+
+  //const response = await dbStore.deleteImage(field_key(field))
+  //console.log("response====", response)
 }
 
 
 </script>
 
 <template>
+
+
   <section class="wrapper">
     <!-- Toolbar -->
     <div class="toolbar" v-if="!isMobile">
@@ -380,12 +628,13 @@ const handleDeleted = async (field) => {
     <!-- Image Grid -->
     <div class="image-wrapper-container" :style="{ flexDirection }">
       <div
-        v-for="(fileConfig, index) in files"
+        v-for="(fileConfig, index) in filesref"
         :key="fileConfig.field"
         class="image-side"
         :style="{ width: tileWidthPercent }"
       >
-        <UploadFile
+        <UploadFile v-if="fileConfig.thumbnailUrl"
+          :fileurl=fileStore.thumbnailUrl
           :ref="(el) => setChildRef(el, index)"
           :label="fileConfig.headerName"
           labelPosition="top"
@@ -394,9 +643,11 @@ const handleDeleted = async (field) => {
           :height="visualHeight"
           :returnType="returnType"
           :editable="editable"
-          :src="imgUrl(fileConfig.field)"
+          
+          :src="fileConfig.thumbnailUrl"
+          :uuid="fileConfig.file_uuid"
           @cropped="(cropped) => handleCropped(fileConfig.field, cropped)"
-          @deleted="() => handleDeleted(fileConfig.field)"
+          @deleted="handleDeleted"
           :compressRatio="props.compressRatio"
           :jpegQuality="props.jpegQuality"
           :outputFormat="props.outputFormat"

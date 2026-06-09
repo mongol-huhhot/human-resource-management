@@ -14,6 +14,7 @@ const props = defineProps({
   identity: { type: String },
   existingImage: { type: String, default: '' },
   src: { type: String, default: '' },
+  uuid: { type: String, default: '' },
   labelPosition: { type: String, default: 'bottom' },
   // additionl properties
   compressRatio: { type: Number, default: 1 },   // 0.1 ~ 1 (e.g., 0.5 halves width/height)
@@ -22,6 +23,8 @@ const props = defineProps({
   maxWidth:     { type: Number, default: 0 },    // optional hard cap; 0 = ignore
   maxHeight:    { type: Number, default: 0 },    // optional hard cap; 0 = ignore
 })
+
+
 
 console.log("UploadImageAdvanced.vue----props===", props)
 
@@ -271,7 +274,8 @@ const deleteImage = (silent = false) => {
   if (fileGallery.value) fileGallery.value.value = ''
   rotation.value = 0
   scale.value = 1
-  if (!silent) emit('deleted', { identity: props.identity })
+  console.log("uuid==================",props.uuid)
+  if (!silent) emit('deleted', { identity: props.uuid })
 }
 
 const rotateImage = () => {
@@ -300,17 +304,12 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
 
 
 <template>
-
-<img
-  :src="fileurl"
-  />
-
   <div class="upload-image-container">
     <!-- Read-only mode -->
     <div v-if="!editable && (image || existingImage)" class="image-preview">
       <label v-if="label && labelPosition === 'top'" class="upload-label">{{ label }}</label>
       <img
-        :src=fileurl
+        :src="image || existingImage"
         class="mt-4 image-zoom"
         :style="{ width: `${width}px`, border: '1px dashed #ccc' }"
         @click="openDialog"
