@@ -56,6 +56,7 @@ function initModel() {
   model.value.ui_includes = normalizeArray(model.value.ui_includes)
   model.value.ui_excludes = normalizeArray(model.value.ui_excludes)
   model.value.scope_codes = normalizeArray(model.value.scope_codes)
+  
 }
 
 onMounted(() => {
@@ -74,7 +75,7 @@ const uiItems = ref([])
 
 const apps = computed(() => dataStore.formMasters?.apps || [])
 const roles = computed(() => dataStore.formMasters?.roles || [])
-const scopeWords = computed(() => dataStore.formMasters?.permission_scope_words || [])
+const scopeWords = computed(() => dataStore.formMasters?.key_words || [])
 
 const statusItems = [
   { label: '指定なし', value: null },
@@ -119,6 +120,8 @@ function updateField(key, value) {
     [key]: value,
   }
 }
+
+
 
 function resetPermissionDetails() {
   model.value = {
@@ -253,13 +256,27 @@ watch(
   }
 )
 
+const lastUiLoadKey = ref('')
+
 watch(
   () => [model.value?.app_code, model.value?.process_code],
   async ([appCode, processCode]) => {
+    const key = `${appCode || ''}:${processCode || ''}`
+
+    if (!appCode || !processCode) {
+      uiItems.value = []
+      lastUiLoadKey.value = ''
+      return
+    }
+
+    if (lastUiLoadKey.value === key) return
+
+    lastUiLoadKey.value = key
     await loadUiItems(appCode, processCode)
   },
   { immediate: true }
 )
+
 
 watch(
   () => model.value?.access_allowed,
@@ -270,6 +287,22 @@ watch(
   }
 )
 
+
+const saveSqltag = computed(() => {
+  return (
+    props.tabConfig?.sqltags?.save ||
+    props.tabConfig?.save ||
+    props.tabConfig?.sqltag_save ||
+    null
+  )
+})
+
+const canSave = computed(() => {
+  return !!saveSqltag.value &&
+    !!model.value?.app_code &&
+    !!model.value?.process_code &&
+    !!model.value?.role_code
+})
 
 async function save() {
   saving.value = true

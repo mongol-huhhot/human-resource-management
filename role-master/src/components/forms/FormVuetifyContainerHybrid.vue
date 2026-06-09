@@ -417,20 +417,6 @@ watch(
               selectedUserIds -->
             <v-card-text>
               <!-- 1. 完全専用画面 -->
-              <!-- <component
-                v-if="isPageCategory(tab.sub_category_code) && getPageComponent(tab.sub_category_code)"
-                :is="getPageComponent(tab.sub_category_code)"
-                v-model="formData[tab.sub_category_code]"
-                :tab-code="tab.sub_category_code"
-                :tab-info="tab"
-                :tab-config="tabSqlTags[tab.sub_category_code] || {}"
-                :common-params="commonParams"
-                :current-row="currentStaffRow"
-                @saved="handleSaved(tab.sub_category_code, $event)"
-                :selected-rows="props.selectedRows"
-                :selected-user-ids="props.selectedUserIds"
-              /> -->
-
               <component
                 v-if="isPageCategory(tab.sub_category_code)"
                 :is="getPageComponent(tab.sub_category_code)"

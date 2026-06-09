@@ -14,7 +14,7 @@ import * as directives from 'vuetify/directives'
 
 // １．マニュアル追加コンポネントは先にこちらにimportする
 import { VDateInput } from 'vuetify/labs/VDateInput'
-import PermissionRuleEditor from '@/components/forms/fields/PermissionRuleEditor.vue'
+// import PermissionRuleEditor from '@/components/forms/fields/PermissionRuleEditor.vue'
 import ScopeRuleEditor from '@/components/forms/fields/ScopeRuleEditor.vue'
 import AppProcessSelector from '@/components/forms/fields/AppProcessSelector.vue'
 import AppRolePermissionPage from '@/components/forms/pages/AppRolePermissionPage.vue'
@@ -41,7 +41,7 @@ const customJa = {
 // ２．マニュアル追加コンポネントはこちらにimportする
 const vuetify = createVuetify({
   components: { ...components, 
-      VDateInput, PermissionRuleEditor, ScopeRuleEditor, AppProcessSelector, AppRolePermissionPage, },
+      VDateInput,  ScopeRuleEditor, AppProcessSelector, AppRolePermissionPage, },
   directives,
 
   locale: {
