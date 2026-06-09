@@ -125,6 +125,10 @@ export const useDataStore = defineStore("dataStore", () => {
                     SQLTAG: 'system.get_permission_scope_words',
                     enabled: 'active',
                 },
+                flow_status: {
+                    SQLTAG: 'system.get_work_flow_status',
+                    enabled: 'active',
+                },
             })
 
             if (ret.code !== 0) {
@@ -136,6 +140,8 @@ export const useDataStore = defineStore("dataStore", () => {
             formMasters.dictionary = ret.data?.dictionary || ret.result?.dictionary?.result || []
             formMasters.roles = ret.data?.roles || ret.result?.roles?.result || []
             formMasters.apps = ret.data?.apps || ret.result?.apps?.result || []
+            formMasters.key_words = ret.data?.key_words || ret.result?.key_words?.result || []
+            formMasters.flow_status = ret.data?.flow_status || ret.result?.flow_status?.result || []
             formMasters.loadedCategoryCode = categoryCode
 
             return ret

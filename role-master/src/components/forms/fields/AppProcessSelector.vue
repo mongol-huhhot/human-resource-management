@@ -29,17 +29,6 @@ const apps = computed(() => {
   return dataStore.formMasters?.apps || []
 })
 
-// function normalizeCategoryRows(rows = []) {
-//   return rows.map(row => ({
-//     title:
-//       row.sub_category_name ||
-//       row.category_name ||
-//       row.sub_category_code,
-//     value: row.sub_category_code,
-//     raw: row,
-//   }))
-// }
-
 function updateApp(appCode) {
   model.value = {
     ...(model.value || {}),

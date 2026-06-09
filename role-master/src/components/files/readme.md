@@ -5,7 +5,9 @@
 - $ownerId：所与者ID、staff_1213, contract_123444, user_test@janga.co.jp,....
 - $fileKind：ファイル種別。thumnail, mynumber_front, mynumber_back,....
 - $uuid：uuid。自動追加
-- $ext：ファイルの拡張子 。自動追加
+- $ext：ファイルの拡張子 。自動追加  
+
+
 
 ## ローカル保存式(files カラムの構造)
 

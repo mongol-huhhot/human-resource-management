@@ -22,8 +22,6 @@ const props = defineProps({
     default: () => [],
   },
 })
-  // :selected-rows="selectedRows"
-  //       :selected-user-ids="selectedUserIds"
 
 const formData = ref({})
 const activeName = ref('')
@@ -99,16 +97,38 @@ function isPageCategory(tabCode) {
  * ファイル:
  * src/pages/AppRolePermissionPage.vue
  */
+const pageModules = import.meta.glob('/src/components/forms/pages/*.vue')
+
+const pageComponentCache = {}
+
 function getPageComponent(tabCode) {
+
+  if (pageComponentCache[tabCode]) {
+    return pageComponentCache[tabCode]
+  }
+
   const cat = getCategoryByTab(tabCode)
   const componentName = cat?.ui_component
 
   if (!componentName) return null
 
-  return defineAsyncComponent(() =>
-    import(`@/pages/${componentName}.vue`)
-  )
+  const path = `/src/components/forms/pages/${componentName}.vue`
+  const loader = pageModules[path]
+
+  console.log('componentName=', componentName)
+  console.log('path=', path)
+  console.log('loader=', loader)
+
+  if (!loader) {
+    console.error('Page component not found:', path, pageModules)
+    return null
+  }
+
+  pageComponentCache[tabCode] = defineAsyncComponent(loader)
+
+  return pageComponentCache[tabCode]
 }
+
 
 function normalizeDictionaryItem(item) {
   const definition = item.field_definition || {}
@@ -397,7 +417,7 @@ watch(
               selectedUserIds -->
             <v-card-text>
               <!-- 1. 完全専用画面 -->
-              <component
+              <!-- <component
                 v-if="isPageCategory(tab.sub_category_code) && getPageComponent(tab.sub_category_code)"
                 :is="getPageComponent(tab.sub_category_code)"
                 v-model="formData[tab.sub_category_code]"
@@ -409,6 +429,20 @@ watch(
                 @saved="handleSaved(tab.sub_category_code, $event)"
                 :selected-rows="props.selectedRows"
                 :selected-user-ids="props.selectedUserIds"
+              /> -->
+
+              <component
+                v-if="isPageCategory(tab.sub_category_code)"
+                :is="getPageComponent(tab.sub_category_code)"
+                v-model="formData[tab.sub_category_code]"
+                :tab-code="tab.sub_category_code"
+                :tab-info="tab"
+                :tab-config="tabSqlTags[tab.sub_category_code] || {}"
+                :common-params="commonParams"
+                :current-row="currentStaffRow"
+                :selected-rows="props.selectedRows"
+                :selected-user-ids="props.selectedUserIds"
+                @saved="handleSaved(tab.sub_category_code, $event)"
               />
 
               <!-- page指定だが ui_component 未設定 -->
