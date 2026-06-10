@@ -26,7 +26,21 @@ const makeFileParams = () => ({
 })
 
 const loadFiles = async () => {
-  await fileStore.loadFiles(makeFileParams())
+  // マイナンバーカードの表・裏をまとめて1回で取得する呼び出し例（サンプルデータ）
+  // await fileStore.loadFiles([
+  //   {
+  //       "owner_type": "staff",
+  //       "owner_id": "staff_11111",
+  //       "file_kind": "mynumber_card_front"
+  //   },
+  //   {
+  //       "owner_type": "staff",
+  //       "owner_id": "staff_11111",
+  //       "file_kind": "mynumber_card_back"
+  //   }
+  // ])
+     console.log("props.initialFiles=============================",props.initialFiles)
+     await fileStore.loadFiles(props.initialFiles)
 
   for (const file of fileStore.files) {
     if (file.mime_type?.startsWith('image/')) {
@@ -58,6 +72,10 @@ configStore.loadFromWindow()
 //const dbStore = useDBConnectionStore()
 
 const props = defineProps({
+  initialFiles: {
+    type: Array,
+    default: () => [] // 配列やオブジェクトのデフォルト値はファクトリ関数で記述します
+  },
   category_code: { type: String, default: 'student_card' },
   swapSizeInLandscape: { type: Boolean, default: true },
   identity: { type: String, default: '' },
@@ -633,8 +651,7 @@ const ok = await fileStore.softDeleteFile(event.identity)
         class="image-side"
         :style="{ width: tileWidthPercent }"
       >
-        <UploadFile v-if="fileConfig.thumbnailUrl"
-          :fileurl=fileStore.thumbnailUrl
+        <UploadFile v-if="fileConfig.thumbnailUrl" 
           :ref="(el) => setChildRef(el, index)"
           :label="fileConfig.headerName"
           labelPosition="top"

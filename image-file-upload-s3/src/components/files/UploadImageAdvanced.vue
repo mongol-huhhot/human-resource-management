@@ -24,7 +24,7 @@ const props = defineProps({
   maxHeight:    { type: Number, default: 0 },    // optional hard cap; 0 = ignore
 })
 
-
+const latesturl = computed(() =>  props.src|| "https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png")
 
 console.log("UploadImageAdvanced.vue----props===", props)
 
@@ -309,7 +309,7 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
     <div v-if="!editable && (image || existingImage)" class="image-preview">
       <label v-if="label && labelPosition === 'top'" class="upload-label">{{ label }}</label>
       <img
-        :src="image || existingImage"
+        :src="latesturl || existingImage"
         class="mt-4 image-zoom"
         :style="{ width: `${width}px`, border: '1px dashed #ccc' }"
         @click="openDialog"

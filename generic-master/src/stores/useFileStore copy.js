@@ -207,46 +207,35 @@ export const useFileStore = defineStore('fileStore', () => {
   }
 
   const loadFiles = async (params = {}, options = {}) => {
-  try {
-    const searchParams = {}
+    try {
+      const searchParams = {}
 
-    // 1. 文字列でカテゴリだけが渡された場合（従来の互換性維持）
-    if (typeof params === 'string') {
-      searchParams.category = params
-    } 
-    // 2. 配列（複数の検索条件セット）が渡された場合 【ここを追加！】
-    else if (Array.isArray(params)) {
-      // PHP側が get_param('filters') で受け取れるように、JSON文字列に変換してセットする
-      searchParams.filters = JSON.stringify(params)
-    } 
-    // 3. 通常のオブジェクト（1つの検索条件セット）が渡された場合
-    else {
-      if (params.category) searchParams.category = params.category
-      if (params.owner_type) searchParams.owner_type = params.owner_type
-      if (params.owner_id) searchParams.owner_id = params.owner_id
-      if (params.file_kind) searchParams.file_kind = params.file_kind
+      if (typeof params === 'string') {
+        searchParams.category = params
+      } else {
+        if (params.category) searchParams.category = params.category
+        if (params.owner_type) searchParams.owner_type = params.owner_type
+        if (params.owner_id) searchParams.owner_id = params.owner_id
+        if (params.file_kind) searchParams.file_kind = params.file_kind
+      }
+
+      const json = await access({
+        method: 'GET',
+        action: 'list',
+        params: searchParams,
+        loading: options.loading ?? true,
+        loadingText: options.loadingText ?? 'ファイル一覧を取得中です...',
+      })
+
+      const result = unwrap(json)
+      files.value = Array.isArray(result) ? result : []
+
+      return files.value
+    } catch (e) {
+      notice(e.message || 'ファイル一覧の取得に失敗しました。', 'error')
+      return null
     }
-
-    // 共通のAPI通信処理（action: 'list' を指定してGETリクエスト）
-    const json = await access({
-      method: 'GET',
-      action: 'list',
-      params: searchParams, // 組み立てたパラメータを送信
-      loading: options.loading ?? true,
-      loadingText: options.loadingText ?? 'ファイル一覧を取得中です...',
-    })
-
-    const result = unwrap(json)
-    files.value = Array.isArray(result) ? result : []
-
-    console.log("files.value=============", files.value)
-
-    return files.value
-  } catch (e) {
-    notice(e.message || 'ファイル一覧の取得に失敗しました。', 'error')
-    return null
   }
-}
   
   const getPreviewUrl = async (fileUuid, options = {}) => {
     try {
