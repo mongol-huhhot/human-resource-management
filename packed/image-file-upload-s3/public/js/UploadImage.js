@@ -7,6 +7,8 @@ window.appConfig.UploadFiles = {
     width:  200,    // number of Pixels
     returnType: 'base64', // 'base64' or 'blob'
     direction: 'row', // 'row' or 'column'
+
+    //student_cardは使用しないため一旦コメントアウト
     student_card: {
         editable: true, // if editable: false then the own has viewable permission only. if editable:  true then has editing permission
         height: 360,    // number of Pixels

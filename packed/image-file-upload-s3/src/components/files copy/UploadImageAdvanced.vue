@@ -301,12 +301,16 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
 
 <template>
 
- <div class="upload-image-container">
+<img
+  :src="fileurl"
+  />
+
+  <div class="upload-image-container">
     <!-- Read-only mode -->
     <div v-if="!editable && (image || existingImage)" class="image-preview">
       <label v-if="label && labelPosition === 'top'" class="upload-label">{{ label }}</label>
       <img
-        :src=image
+        :src=fileurl
         class="mt-4 image-zoom"
         :style="{ width: `${width}px`, border: '1px dashed #ccc' }"
         @click="openDialog"

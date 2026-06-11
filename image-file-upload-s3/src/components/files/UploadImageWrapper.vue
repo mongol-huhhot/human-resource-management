@@ -441,7 +441,7 @@ const noimageurl = ""
     <!-- Image Grid -->
     <div class="image-wrapper-container" :style="{ flexDirection }">
       <div
-        v-for="(fileConfig, index) in files"
+        v-for="(fileConfig, index) in fileStore.files"
         :key="fileConfig.field"
         class="image-side"
         :style="{ width: tileWidthPercent }"
