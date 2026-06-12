@@ -99,7 +99,20 @@ async function devLogin() {
      tab-code="profile"
      category-code="mynumber_card"
      owner-type="staff"
-     owner-id="22222"
+     owner-id="11111"
+     :swap-size-in-landscape="true"
+     :compress-ratio="1"
+     :jpeg-quality="0.9"
+     output-format="image/jpeg"
+     :max-width="0"
+     :max-height="0"
+   />
+
+   <UploadImageWrapper
+     tab-code="profile"
+     category-code="student_card"
+     owner-type="staff"
+     owner-id="11111"
      :swap-size-in-landscape="true"
      :compress-ratio="1"
      :jpeg-quality="0.9"

@@ -8,7 +8,6 @@ import { useFileStore } from '@/stores/useFileStore'
 
 const configStore = useAppConfigStore()
 configStore.loadFromWindow()
-const fileStore = useFileStore()
 
 // 1. 初期状態は「未完了（false）」にしておく
 const isInitialized = ref(false)
@@ -28,6 +27,16 @@ const props = defineProps({
 
 console.log("UploadImageWrapper.props================",props)
 
+// ★ 1. propsからユニークなストアIDを組み立てる
+// 例: "fileStore_staff_22222_mynumber_card"
+const uniqueStoreId = computed(() => {
+  return `fileStore_${props.ownerType}_${props.ownerId}_${props.categoryCode}`
+})
+
+// ★ 2. 動的IDを渡して、このコンポーネント専用のストアインスタンスを取得する
+// 引数にIDを渡し、戻ってきた関数をさらに実行 () します
+const fileStore = useFileStore(uniqueStoreId.value)()
+
 // --- Config ---
 const cfg = computed(() => (configStore.UploadFiles?.[props.categoryCode]) || {})
 const files = computed(() => cfg.value.files || [])
@@ -39,15 +48,6 @@ const computedurl = computed(() => (fileStore.UploadFiles?.[props.categoryCode])
 
 console.log("cfg.value.files======================",files.value)
 console.log("baseHeight, baseWidth",baseHeight.value, baseWidth.value)
-
-//以下は一旦コメントアウト
-
-//selectedFile は、パソコンから選択したアップロード前のファイル本体を一時的に保存する場所
-// const category = ref('staff/profile')
-// const ownerType = ref('staff')
-//const ownerId = ref('staff_11111')
-// const fileKind = ref('')
-//const selectedFile = ref(null)
 
 
 /**
@@ -62,20 +62,44 @@ const imgUrl = (field) => {
   const matchedFile = (fileStore.files || []).find(file => file.file_kind === targetKind)
   
   console.log("matchedFile ? matchedFile.thumbnailUrl==========", matchedFile ? matchedFile.thumbnailUrl: "")
-  // 見つかればそのサムネイルURL、なければ空文字を返す
-  return matchedFile ? matchedFile.thumbnailUrl : 'https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-1024x898.png'
+  // 見つかればそのサムネイルURL、なければ個別で指定の値を返す
+  return matchedFile ? matchedFile.thumbnailUrl : null
+}
+
+const imguuid = (field) => {
+  // 探したい完全な file_kind 文字列を組み立てる (例: "mynumber_card_front")
+  const targetKind = `${props.categoryCode}_${field}`
+  
+  // ストアの配列から合致するデータを見つける
+  const matchedFile = (fileStore.files || []).find(file => file.file_kind === targetKind)
+  
+  console.log("matchedFile ? matchedFile.thumbnailUrl==========", matchedFile ? matchedFile.thumbnailUrl: "")
+  // 見つかればそのサムネイルURL、なければ個別で指定の値を返す
+  return matchedFile ? matchedFile.file_uuid : null
 }
 
 
-//入力されたテキストボックスの値をひとまとめにして、APIに送るためのオブジェクトを作る関数
-const makeFileParams = () => ({
-  category: category.value,
-  owner_type: ownerType.value,
-  owner_id: props.owner_id,
-  file_kind: fileKind.value,
-})
+/**
+ * 引数で受け取った field（'mynumber_card_front' や 'mynumber_card_back' など）をもとに、
+ * ファイル操作に必要なパラメーターオブジェクトを生成する
+ */
+const makeFileParams = (field) => {
+  // owner_id を 'staff_11111' の形式に組み立て
+  const formattedOwnerId = `${props.ownerType}_${props.ownerId}`
 
-//makeFileParamsを改良したもの
+  // tabCode を 'staff/profile' の形式に組み立て
+  const formattedCategory = `${props.ownerType}/${props.tabCode}`
+
+  return {
+    category:   formattedCategory,                         // 例: "staff/profile"
+    owner_type: props.ownerType,                           // 例: "staff"
+    owner_id:   formattedOwnerId,                          // 例: "staff_11111"
+    file_kind:  `${props.categoryCode}_${field}`           // 例: "mynumber_card_front"
+  }
+}
+
+//makeFileParamsをloadfiles用に改良したもの
+//uploadfilesのパラメーターにはmakeFileParamsメソッドを使用（要改善）
 const filePayloadList = computed(() => {
   // owner_id を 'staff_11111' の形式に組み立て
   const formattedOwnerId = `${props.ownerType}_${props.ownerId}`
@@ -110,8 +134,8 @@ const loadFiles = async () => {
           loading: false,
         })
   
-        console.log("file==", file)
-        console.log("preview==", preview)
+        //console.log("file==", file)
+        //console.log("preview==", preview)
         file.thumbnailUrl = preview?.url || null
       }
     }
@@ -122,8 +146,6 @@ const loadFiles = async () => {
     isInitialized.value = true
   }
 }
-
-  loadFiles()
 
 // --- Mobile detection ---
 //画面サイズ（レスポンシブ）の判定
@@ -136,11 +158,11 @@ const updateIsMobile = () => {
 }
 
 onMounted(() => {
+  loadFiles()
   mql = window.matchMedia('(max-width: 768px)')
   updateIsMobile()
   if (mql.addEventListener) mql.addEventListener('change', updateIsMobile)
   else mql.addListener(updateIsMobile)
-
 })
 
 onBeforeUnmount(() => {
@@ -241,6 +263,7 @@ const hasValidCroppedImage = (comp, fileConfig) => {
   
   return isValidDataUrl
 }
+
 // 画像の一括保存処理（saveAllImages）
 const saveAllImages = async () => {
   saving.value = true
@@ -250,30 +273,23 @@ const saveAllImages = async () => {
   await nextTick() // DOMの更新を確実にする
   
   try {
+    // -------------------------------------------------------------
     // 1. アップロード対象（編集された画像）の抽出
+    // -------------------------------------------------------------
     const validComponents = []
     
     for (let i = 0; i < files.value.length; i++) {
       const comp = childComponents.value[i]
       const fileConfig = files.value[i]
       
-      if (!comp) {
-        console.warn(`⚠️ Component not found for ${fileConfig.field} at index ${i}`)
-        continue
-      }
+      if (!comp) continue
       
-      // 有効な切り抜き画像があるか確認
       const isValid = hasValidCroppedImage(comp, fileConfig)
-      
       if (isValid) {
         validComponents.push({ comp, fileConfig })
-        console.log(`✅ Found valid cropped image for ${fileConfig.field}`)
-      } else {
-        console.log(`⏭️ Skipping ${fileConfig.field} (no valid cropped image)`)
       }
     }
     
-    // 変更された画像が1枚もない場合は案内を出して終了
     if (validComponents.length === 0) {
       saveResult.value = {
         type: 'info',
@@ -281,61 +297,91 @@ const saveAllImages = async () => {
       }
       return
     }
-    
+
+    // -------------------------------------------------------------
+    // 【新規追加】2. 編集前の元画像（古い画像）を特定し、一括で物理削除
+    // -------------------------------------------------------------
+    console.log('🧹 編集された枠の古い元画像を特定しています...')
+    const deleteTargets = []
+
+    for (const { fileConfig } of validComponents) {
+      // 現在ストアに保持されている最新ファイル群 (fileStore.files) から、
+      // 今回編集されたフィールド（例: 'front' や 'back'）に対応する既存の画像データを検索
+      // ※紐付け条件がfile_kindとfieldの結合（例: category_front）の場合は適宜調整してください
+      const existingFile = fileStore.files.find(
+        f => f.file_kind === `${props.categoryCode}_${fileConfig.field}`
+      )
+
+      if (existingFile && existingFile.file_uuid) {
+        deleteTargets.push({
+          uuid: existingFile.file_uuid,
+          field: existingFile.file_kind
+        })
+      }
+    }
+
+    // 古い画像が存在する場合のみ削除フェーズを実行
+    if (deleteTargets.length > 0) {
+      console.log(`🗑️ ${deleteTargets.length} 件の古い元画像を物理削除します...`)
+      
+      for (const target of deleteTargets) {
+        // deleteFileのローディングが全体と衝突しないよう options で伝播UIを制御
+        const isDeleted = await fileStore.deleteFile(target.uuid, { 
+          loading: true, 
+          loadingText: `${target.field} の古い画像を削除中...`,
+          showSuccessMessage: false // 一括処理なので個別の「成功しました」トーストは消す
+        })
+
+        // トランザクション制御：1件でも削除に失敗したら、新しい画像のアップロードに進まずエラー中断する
+        if (!isDeleted) {
+          throw new Error(`${target.field} の古い画像の削除に失敗したため、処理を中断しました。`)
+        }
+      }
+      console.log('✅ すべての古い元画像の削除が完了しました。')
+    }
+
+    // -------------------------------------------------------------
+    // 3. 各新しい画像をループ処理で順番にアップロード（後半戦）
+    // -------------------------------------------------------------
     totalImages.value = validComponents.length
     console.log(`📸 Preparing to upload ${totalImages.value} images`)
     
     const results = []
     
-    // 2. 各画像をループ処理で順番にアップロード
     for (let i = 0; i < validComponents.length; i++) {
       const { comp, fileConfig } = validComponents[i]
       
       try {
-        // 必要に応じて切り抜き（トリミング）を確定させる
         if (typeof comp.getCropped === 'function') {
-          console.log(`🔄 Triggered getCropped for ${fileConfig.field}`)
           comp.getCropped()
-          // Canvasの生成・描画を待つ（0.5秒）
           await new Promise(resolve => setTimeout(resolve, 500))
-        } else {
-          console.warn(`⚠️ getCropped method not available for ${fileConfig.field}`)
         }
         
-        // Base64テキスト形式の画像を、通信に適したBlob（バイナリ）形式に変換
         const blob = await fetchImageBlob(comp.croppedImage)
         
-        // 新しい共通関数でアップロードを実行
+        // アップロード実行
         const result = await fileStore.uploadFile(
           blob,
-          makeFileParams(),
+          makeFileParams(fileConfig.field), // 画像の種類を特定できるように引数を調整
         )
         
         if (result) {
-          results.push({
-            success: true,
-            field: fileConfig.field,
-            result: result
-          })
-          console.log(`✅ Successfully uploaded image for ${fileConfig.field}`)
+          results.push({ success: true, field: fileConfig.field, result: result })
         } else {
           throw new Error('アップロード結果が空、または処理に失敗しました。')
         }
         
       } catch (err) {
         console.error(`🖼️ 画像アップロードに失敗しました ${fileConfig.field}:`, err)
-        results.push({
-          success: false,
-          field: fileConfig.field,
-          error: err.message
-        })
+        results.push({ success: false, field: fileConfig.field, error: err.message })
       } finally {
-        // 進捗度（%）の計算と画面更新
         saveProgress.value = Math.round((i + 1) / totalImages.value * 100)
       }
     }
     
-    // 3. アップロード結果の集計と画面リフレッシュ
+    // -------------------------------------------------------------
+    // 4. アップロード結果の集計と画面リフレッシュ
+    // -------------------------------------------------------------
     const successCount = results.filter(r => r.success).length
     const errorCount = results.filter(r => !r.success).length
     
@@ -346,44 +392,33 @@ const saveAllImages = async () => {
         details: results
       }
       
-      // 子コンポーネントの編集状態（Base64の一時データ）をクリア
+      // 子コンポーネントの編集状態をクリア
       for (let i = 0; i < childComponents.value.length; i++) {
         if (childComponents.value[i]) {
           childComponents.value[i].croppedImage = null
         }
       }
       
-      // 【重要】新しい共通関数 `loadFiles` を用いて、サーバーの最新の画像状態を再取得（リフレッシュ）
-      console.log('🔄 Reloading files via loadFiles...')
-      const reloadParams = {
-        category: category_code?.value || props?.category_code || 'default',
-        owner_type: 'common',
-        owner_id: identity?.value || props?.identity || 'none'
-      }
-      await loadFiles(reloadParams, { loading: false })
+      // サーバーの最新状態を再取得（物理削除＋新規アップロードの最終結果を反映）
+      await loadFiles(filePayloadList.value, { loading: false })
     }
     
-    // 一部、または全部失敗した場合のエラーハンドリング
     if (errorCount > 0) {
       const errorMsg = saveResult.value 
         ? saveResult.value.message + ` (${errorCount} 件失敗)`
         : `❌ ${errorCount} 件の画像保存に失敗しました`
       
-      saveResult.value = {
-        type: 'error',
-        message: errorMsg,
-        details: results.filter(r => !r.success)
-      }
+      saveResult.value = { type: 'error', message: errorMsg, details: results.filter(r => !r.success) }
     }
     
   } catch (err) {
+    // 削除失敗、または致命的エラー時のハンドリング
     saveResult.value = {
       type: 'error',
       message: `❌ 保存処理中にエラーが発生しました: ${err.message}`,
     }
     console.error('💾 Save error:', err)
   } finally {
-    // 成功・失敗に関わらず、最後にローディング状態と進捗をリセット
     saving.value = false
     totalImages.value = 0
   }
@@ -423,9 +458,14 @@ const handleCropped = (field, cropped) => {
 const handleDeleted = async (event) => {
   //console.log("fileConfig.field====", field)
 
-const ok = await fileStore.softDeleteFile(event.identity)
+  //論理削除か物理削除かは任意で変更してください
+const ok = await fileStore.softDeleteFile(event.uuid, { 
+          loading: true, 
+          loadingText: `選択画像を削除中...`,
+          showSuccessMessage: true
+        })
 
-  if (ok) {
+if (ok) {
     await loadFiles()
   }
 }
@@ -438,7 +478,7 @@ const ok = await fileStore.softDeleteFile(event.identity)
 <template>
 
 
-  <section class="wrapper" v-if="isInitialized">
+  <section class="wrapper" >
     <!-- Toolbar -->
     <div class="toolbar" v-if="!isMobile">
       <div class="toolbar__group">
@@ -463,14 +503,12 @@ const ok = await fileStore.softDeleteFile(event.identity)
           :ref="(el) => setChildRef(el, index)"
           :label="fileConfig.headerName"
           labelPosition="top"
-          :identity="props.identity"
+          :uuId="imguuid(fileConfig.field)"
           :width="visualWidth"
           :height="visualHeight"
           :returnType="returnType"
           :editable="editable"
-          
           :src="imgUrl(fileConfig.field)"
-          :uuid="fileConfig.file_uuid"
           @cropped="(cropped) => handleCropped(fileConfig.field, cropped)"
           @deleted="handleDeleted"
           :compressRatio="props.compressRatio"

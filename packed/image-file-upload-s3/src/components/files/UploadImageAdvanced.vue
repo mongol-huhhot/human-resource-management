@@ -1,17 +1,17 @@
 <!-- UploadImageAdvanced.vue -->
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 
 const props = defineProps({
-  fileurl: { type: String },
   label: { type: String, default: 'Upload or Take Photo' },
   width: { type: Number, default: 200 },
   height: { type: Number, default: 200 },
   editable: { type: Boolean, default: true },
   returnType: { type: String, default: 'blob' }, // 'blob' | 'base64'
   identity: { type: String },
+  uuId: { type: String },
   existingImage: { type: String, default: '' },
   src: { type: String, default: '' },
   labelPosition: { type: String, default: 'bottom' },
@@ -271,7 +271,7 @@ const deleteImage = (silent = false) => {
   if (fileGallery.value) fileGallery.value.value = ''
   rotation.value = 0
   scale.value = 1
-  if (!silent) emit('deleted', { identity: props.identity })
+  if (!silent) emit('deleted', { uuid: props.uuId })
 }
 
 const rotateImage = () => {
@@ -293,6 +293,17 @@ const confirmDelete = () => {
 }
 const cancelDelete = () => { showDeleteConfirm.value = false }
 
+watch(() => props.src, (newSrc) => {
+  if (newSrc) {
+    image.value = newSrc
+    committedSrc.value = newSrc
+    imageUploaded.value = true
+    // クロップ中の画面を開いていなければ、表示フラグを調整
+    if (!croppedImage.value) {
+      visible.value = false 
+    }
+  }
+}, { immediate: true })
 
 /* expose for parent if needed */
 defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage, src: image })
