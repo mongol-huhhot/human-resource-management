@@ -54,7 +54,7 @@ const meta = computed(() => ({
     /> -->
 
     <UploadImageWrapper
-       v-if="staffCode"
+       
        :meta="meta"
     />
 </template>

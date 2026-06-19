@@ -493,6 +493,27 @@ watch(
   { deep: true, immediate: true }
 )
 
+watch(
+  () => [
+    props.meta.ownerId,
+    // props.meta.documentType,
+    // props.meta.categoryCode,
+    // props.meta.ownerType
+  ],
+  async (newVal, oldVal) => {
+    if (!oldVal) return
+
+    console.log('🔄 meta changed', {
+      old: oldVal,
+      new: newVal
+    })
+
+    //isInitialized.value = false
+
+    await loadFiles()
+  }
+)
+
 // //デバッグ用
 // watch(
 //   () => uniqueStoreId.value,
