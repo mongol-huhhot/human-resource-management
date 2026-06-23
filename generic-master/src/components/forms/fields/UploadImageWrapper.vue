@@ -20,6 +20,7 @@ const props = defineProps({
       documentType: '',   // ex) mynumber_card, ...
       ownerType: 'staff', // ex) staff, ...
       ownerId: '',        // ex) 11111, 22222, ...
+      recordId: '',        // ex) 
     })
   },
   
@@ -58,6 +59,12 @@ const outputFormat        = computed(() => cfg.value.outputFormat)
 const maxWidth            = computed(() => cfg.value.maxWidth)
 const maxHeight           = computed(() => cfg.value.maxHeight)
 
+const fileKey = computed(() => {
+  return props.meta.recordId
+    ? `${props.meta.documentType}#${props.meta.recordId}`
+    : props.meta.documentType
+})
+
 console.log("cfg.value.files======================",files.value)
 console.log("baseHeight, baseWidth",baseHeight.value, baseWidth.value)
 
@@ -71,7 +78,7 @@ const imgUrl = (field) => {
   const targetKind = `${props.meta.documentType}_${field}`
   
   // ストアの配列から合致するデータを見つける
-  const matchedFile = (fileStore.files[props.meta.documentType] || []).find(file => file.file_kind === targetKind)
+  const matchedFile = (fileStore.files[fileKey.value] || []).find(file => file.file_kind === targetKind)
   
   //console.log("matchedFile ? matchedFile.thumbnailUrl==========", matchedFile ? matchedFile.thumbnailUrl: "")
   // 見つかればそのサムネイルURL、なければ個別で指定の値を返す
@@ -127,6 +134,7 @@ const filePayloadList = computed(() => {
       owner_type: props.meta.ownerType,                         // "staff"
       owner_id:   formattedOwnerId,                        // "staff_11111"
       file_kind:  `${props.meta.documentType}_${file.field}`,     // "mynumber_card_front" 形式
+      record_id:   props.meta.recordId,
       //document_type: props.meta.documentType,
     }
   })
@@ -150,12 +158,23 @@ const loadFiles = async () => {
 
     await fileStore.loadFiles(
       {
-        document_type: props.meta.documentType,
+        //document_type: props.meta.documentType,
+        //filestoreでもdocument_typeではなくfile_keyを参照するように変更
+        file_key:fileKey.value,
         filters: filePayloadList.value,
       }
     )
 
-    for (const file of fileStore.files[props.meta.documentType]) {
+
+    // const fileKey = props.meta.recordId
+    //   ? `${props.meta.documentType}#${props.meta.recordId}`
+    //   : props.meta.documentType
+
+    //   console.log("loadfiles.filekey=======",fileKey)
+    
+    for (const file of fileStore.files[fileKey.value] || []) {
+
+    //for (const file of fileStore.files[props.meta.documentType]) {
       if (file.mime_type?.startsWith('image/')) {
   
         const preview = await fileStore.getPreviewUrl(file.file_uuid, {
@@ -164,6 +183,7 @@ const loadFiles = async () => {
   
         //console.log("file==", file)
         //console.log("preview==", preview)
+        console.log("filegetpreviewurl=======",preview?.url || null)
         file.thumbnailUrl = preview?.url || null
       }
     }
@@ -489,6 +509,15 @@ watch(
   () => props.meta,
   (val) => {
     console.log('meta changed', val)
+  },
+  { deep: true, immediate: true }
+)
+
+//デバッグ用
+watch(
+  () => fileKey,
+  (val) => {
+    console.log('fileKey changed', val)
   },
   { deep: true, immediate: true }
 )
