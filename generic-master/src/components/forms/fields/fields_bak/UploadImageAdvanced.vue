@@ -419,7 +419,7 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
       <div v-if="labelPosition === 'bottom'" class="preview-label">{{ label }}</div>
       
       <div class="controls mt-3">
-        <!-- <button class="btn btn-danger" type="button" @click="resetCropper">✖ リセット</button> -->
+        <button class="btn btn-danger" type="button" @click="resetCropper">✖ リセット</button>
         <button class="btn btn-outline-danger" type="button" @click="requestDelete">🗑 削除</button>
       </div>
     </div>

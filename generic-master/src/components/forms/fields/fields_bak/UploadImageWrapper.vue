@@ -90,7 +90,7 @@ const imguuid = (field) => {
   const targetKind = `${props.meta.documentType}_${field}`
   
   // ストアの配列から合致するデータを見つける
-  const matchedFile = (fileStore.files[fileKey.value] || []).find(file => file.file_kind === targetKind)
+  const matchedFile = (fileStore.files[props.meta.documentType] || []).find(file => file.file_kind === targetKind)
   
   //console.log("matchedFile ? matchedFile.thumbnailUrl==========", matchedFile ? matchedFile.thumbnailUrl: "")
   // 見つかればそのサムネイルURL、なければ個別で指定の値を返す
@@ -347,52 +347,50 @@ const saveAllImages = async () => {
       return
     }
 
-    //以下２，３版の処理はコンポーネントのリセットボタンを消したことで実質使わないため
-    //コメントアウト
     // -------------------------------------------------------------
     // 【新規追加】2. 編集前の元画像（古い画像）を特定し、一括で物理削除
     // -------------------------------------------------------------
-    // console.log('🧹 編集された枠の古い元画像を特定しています...')
-    // const deleteTargets = []
+    console.log('🧹 編集された枠の古い元画像を特定しています...')
+    const deleteTargets = []
 
-    // for (const { fileConfig } of validComponents) {
-    //   // 現在ストアに保持されている最新ファイル群 (fileStore.files[props.meta.documentType]) から、
-    //   // 今回編集されたフィールド（例: 'front' や 'back'）に対応する既存の画像データを検索      
-    //   //filestore.fileの構造変更に合わせて修正
-    //   const currentFiles =
-    //     fileStore.files?.[fileKey.value] || []
+    for (const { fileConfig } of validComponents) {
+      // 現在ストアに保持されている最新ファイル群 (fileStore.files[props.meta.documentType]) から、
+      // 今回編集されたフィールド（例: 'front' や 'back'）に対応する既存の画像データを検索      
+      //filestore.fileの構造変更に合わせて修正
+      const currentFiles =
+        fileStore.files?.[fileKey.value] || []
       
-    //   const existingFile = currentFiles.find(
-    //     f => f.file_kind === `${props.meta.documentType}_${fileConfig.field}`
-    //   )
+      const existingFile = currentFiles.find(
+        f => f.file_kind === `${props.meta.documentType}_${fileConfig.field}`
+      )
 
-    //   if (existingFile && existingFile.file_uuid) {
-    //     deleteTargets.push({
-    //       uuid: existingFile.file_uuid,
-    //       field: existingFile.file_kind
-    //     })
-    //   }
-    // }
+      if (existingFile && existingFile.file_uuid) {
+        deleteTargets.push({
+          uuid: existingFile.file_uuid,
+          field: existingFile.file_kind
+        })
+      }
+    }
 
-    // // 古い画像が存在する場合のみ削除フェーズを実行
-    // if (deleteTargets.length > 0) {
-    //   console.log(`🗑️ ${deleteTargets.length} 件の古い元画像を物理削除します...`)
+    // 古い画像が存在する場合のみ削除フェーズを実行
+    if (deleteTargets.length > 0) {
+      console.log(`🗑️ ${deleteTargets.length} 件の古い元画像を物理削除します...`)
       
-    //   for (const target of deleteTargets) {
-    //     // deleteFileのローディングが全体と衝突しないよう options で伝播UIを制御
-    //     const isDeleted = await fileStore.deleteFile(target.uuid, { 
-    //       loading: true, 
-    //       loadingText: `${target.field} の古い画像を削除中...`,
-    //       showSuccessMessage: false // 一括処理なので個別の「成功しました」トーストは消す
-    //     })
+      for (const target of deleteTargets) {
+        // deleteFileのローディングが全体と衝突しないよう options で伝播UIを制御
+        const isDeleted = await fileStore.deleteFile(target.uuid, { 
+          loading: true, 
+          loadingText: `${target.field} の古い画像を削除中...`,
+          showSuccessMessage: false // 一括処理なので個別の「成功しました」トーストは消す
+        })
 
-    //     // トランザクション制御：1件でも削除に失敗したら、新しい画像のアップロードに進まずエラー中断する
-    //     if (!isDeleted) {
-    //       throw new Error(`${target.field} の古い画像の削除に失敗したため、処理を中断しました。`)
-    //     }
-    //   }
-    //   console.log('✅ すべての古い元画像の削除が完了しました。')
-    // }
+        // トランザクション制御：1件でも削除に失敗したら、新しい画像のアップロードに進まずエラー中断する
+        if (!isDeleted) {
+          throw new Error(`${target.field} の古い画像の削除に失敗したため、処理を中断しました。`)
+        }
+      }
+      console.log('✅ すべての古い元画像の削除が完了しました。')
+    }
 
     // -------------------------------------------------------------
     // 3. 各新しい画像をループ処理で順番にアップロード（後半戦）

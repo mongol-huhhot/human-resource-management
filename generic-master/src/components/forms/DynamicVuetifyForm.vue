@@ -34,6 +34,18 @@ const visibleFields = computed(() =>
   props.fields.filter(field => field && field.showable !== 'hide')
 )
 
+const normalFields = computed(() =>
+  visibleFields.value.filter(
+    field => field.group !== 'attachment'
+  )
+)
+
+const attachmentFields = computed(() =>
+  visibleFields.value.filter(
+    field => field.group === 'attachment'
+  )
+)
+
 // 表示用：Date オブジェクトに変換
 function toDisplayValue(field, value) {
   if (field.component !== 'v-date-input' && field.type !== 'date') return value
@@ -93,7 +105,7 @@ async function submit() {
   <v-form @submit.prevent="submit">
     <v-row dense>
       <v-col
-        v-for="field in visibleFields"
+        v-for="field in normalFields"
         :key="field.key"
         cols="12"
         sm="6"
@@ -129,5 +141,42 @@ async function submit() {
         </v-btn>
       </v-col>
     </v-row>
+
+   <v-divider class="my-6" />
+
+    <v-card
+      v-if="attachmentFields.length"
+      variant="flat"
+      v-for="field in attachmentFields"
+        :key="field.key"
+    >
+      <v-card-title>
+        添付ファイル
+      </v-card-title>
+    
+      <v-card-text>
+        <component
+          :is="field.component || 'v-text-field'"
+          :model-value="
+            field.component === 'v-date-input' || field.type === 'date'
+              ? toDisplayValue(field, formData[field.key])
+              : formData[field.key]
+          "
+          v-bind="field.props || {}"
+          :label="field.label"
+          :type="field.component === 'v-date-input' ? undefined : field.type"
+          :readonly="field.readonly"
+          :disabled="disabled || field.disabled"
+          :items="field.items || field.props?.items || []"
+          :item-title="field.props?.itemTitle || field.props?.['item-title'] || 'label'"
+          :item-value="field.props?.itemValue || field.props?.['item-value'] || 'value'"
+          :rules="buildRules(field)"
+          @update:model-value="value => updateField(field, value)"
+          :staffCode="staffCode"
+          :recordId="recordId"
+        />
+      </v-card-text>
+    </v-card>
+
   </v-form>
 </template>
