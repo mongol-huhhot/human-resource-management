@@ -72,6 +72,12 @@ window.appConfig.UploadFiles = {
         width:  360,    // number of Pixels
         returnType: 'blob', // 'base64' or 'blob'
         direction: 'row', // 'row' or 'column'
+        swapSizeInLandscape: true,
+        compressRatio: 1,    // 0.1 ~ 1
+        jpegQuality:   0.9,  // 0.1 ~ 1
+        outputFormat:  'image/jpeg',
+        maxWidth:      0,    // 0 = ignore
+        maxHeight:     0,    // 0 = ignore
         files :[ // you can define many files to be uloaded
             { field: 'front', headerName: 'マイナンバーカード表'},
             { field: 'back', headerName: 'マイナンバーカード裏'},
@@ -83,6 +89,12 @@ window.appConfig.UploadFiles = {
         width:  360,    // number of Pixels
         returnType: 'blob', // 'base64' or 'blob'
         direction: 'row', // 'row' or 'column'
+        swapSizeInLandscape: true,
+        compressRatio: 1,    // 0.1 ~ 1
+        jpegQuality:   0.9,  // 0.1 ~ 1
+        outputFormat:  'image/jpeg',
+        maxWidth:      0,    // 0 = ignore
+        maxHeight:     0,    // 0 = ignore
         files :[ // you can define many files to be uloaded
             { field: 'cover', headerName: '通帳表紙'},
             { field: 'front', headerName: '通帳見開き'},
@@ -94,6 +106,12 @@ window.appConfig.UploadFiles = {
         width:  360,    // number of Pixels
         returnType: 'blob', // 'base64' or 'blob'
         direction: 'row', // 'row' or 'column'
+        swapSizeInLandscape: true,
+        compressRatio: 1,    // 0.1 ~ 1
+        jpegQuality:   0.9,  // 0.1 ~ 1
+        outputFormat:  'image/jpeg',
+        maxWidth:      0,    // 0 = ignore
+        maxHeight:     0,    // 0 = ignore
         files :[ // you can define many files to be uloaded
             { field: 'front', headerName: '銀行カード'},
         ]

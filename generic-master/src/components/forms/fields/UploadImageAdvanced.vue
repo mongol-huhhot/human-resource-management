@@ -338,23 +338,26 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
       <label v-if="label && labelPosition === 'top'" class="upload-label">{{ label }}</label>
 
       <div class="controls py-2">
-        <button
+        <v-btn
           v-if="showCameraButton"
           type="button"
+          prepend-icon="mdi-camera"
           class="btn btn-primary"
           @click="openCamera"
         >
-          📷 カメラで撮影
-        </button>
+          カメラで撮影
+        </v-btn>
 
-        <button
+        <v-btn
           v-if="showGalleryButton"
           type="button"
+          color="secondary"
+          prepend-icon="mdi-image-multiple"
           class="btn btn-secondary"
           @click="openGallery"
         >
-          🖼 ギャラリーから選択
-        </button>
+          ギャラリーから選択
+        </v-btn>
       </div>
 
       <input
@@ -390,9 +393,9 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
       <div v-if="labelPosition === 'bottom'" class="cropper-label">{{ label }}</div>
 
       <div class="controls mt-3">
-        <button type="button" class="btn btn-secondary" @click="rotateImage">🔄 回転</button>
-        <button type="button" class="btn btn-primary crop-btn" @click="getCropped">✂️ 切り取る</button>
-        <button type="button" class="btn btn-warning" @click="cancelUpload">キャンセル</button>
+        <v-btn type="button" prepend-icon="mdi-rotate-right"  class="btn btn-secondary" @click="rotateImage">回転</v-btn>
+        <v-btn type="button" prepend-icon="mdi-crop" class="btn btn-primary crop-btn" @click="getCropped">切り取る</v-btn>
+        <v-btn type="button" prepend-icon="mdi-close"  class="btn btn-warning" @click="cancelUpload">キャンセル</v-btn>
       </div>
     </div>
 
@@ -400,7 +403,7 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
       <div v-if="labelPosition === 'top'" class="preview-label">{{ label }}</div>
       
       <v-img
-        width="200"
+        width="100%"
         aspect-ratio="4/3"
         :src="croppedImage || image || existingImage"
         class="mt-3 image-zoom rounded-lg shadow-sm"
@@ -420,34 +423,79 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
       
       <div class="controls mt-3">
         <!-- <button class="btn btn-danger" type="button" @click="resetCropper">✖ リセット</button> -->
-        <button class="btn btn-outline-danger" type="button" @click="requestDelete">🗑 削除</button>
+        <v-btn class="btn btn-outline-danger" type="button" prepend-icon="mdi-delete" @click="requestDelete">削除</v-btn>
       </div>
     </div>
 
-    <div v-if="showDialog" class="overlay" @click.self="closeDialog">
-      <div class="overlay-content rounded-xl shadow-lg">
-        <img
+    <v-dialog v-model="showDialog" max-width="400">
+      <v-card>
+    
+        <v-img
           :src="croppedImage || image || existingImage"
-          class="dialog-img rounded-lg"
-          alt="dialog"
-        />
-        <div class="dialog-actions">
-          <button class="btn btn-light" @click="closeDialog">閉じる</button>
-        </div>
-      </div>
-    </div>
+          max-height="80vh"
+          contain/>
+    
+        <v-card-actions>
+          <v-spacer />
+    
+          <v-btn
+            color="primary"
+            variant="text"
+            prepend-icon="mdi-close-circle"
+            @click="closeDialog"
+          >
+            閉じる
+          </v-btn>
+    
+        </v-card-actions>
+    
+      </v-card>
+    </v-dialog>
 
-    <div v-if="showDeleteConfirm" class="overlay" @click.self="cancelDelete" aria-modal="true" role="dialog">
-      <div class="overlay-content confirm-modal rounded-xl shadow-lg">
-        <div class="confirm-icon">⚠️</div>
-        <div class="confirm-title">画像を削除しますか？</div>
-        <div class="confirm-text">この操作は元に戻せません。</div>
-        <div class="dialog-actions vertical-actions">
-          <button class="btn btn-danger btn-block" @click="confirmDelete">はい、削除する</button>
-          <button class="btn btn-light btn-block" @click="cancelDelete">いいえ、やめる</button>
-        </div>
-      </div>
-    </div>
+    <v-dialog
+      v-model="showDeleteConfirm"
+      max-width="420">
+      <v-card>
+    
+        <v-card-title>
+          削除確認
+        </v-card-title>
+    
+        <v-card-text>
+          選択された画像を削除します。
+    
+          <v-alert
+            class="mt-3"
+            type="warning"
+            variant="tonal"
+          >
+            この操作は取り消せません。
+          </v-alert>
+        </v-card-text>
+    
+        <v-card-actions>
+          <v-spacer />
+    
+          <v-btn
+            variant="text"
+            @click="cancelDelete"
+          >
+            キャンセル
+          </v-btn>
+    
+          <v-btn
+            color="error"
+            @click="confirmDelete"
+          >
+            削除
+          </v-btn>
+    
+        </v-card-actions>
+    
+      </v-card>
+    </v-dialog>
+
+    
 
   </div>
 </template>
@@ -485,7 +533,7 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
 .mt-3 { margin-top: 12px; }
 .py-2 { padding-top: 8px; padding-bottom: 8px; }
 
-/* 共通ボタン（モダンフラットデザイン） */
+/* 共通ボタン（モダンフラットデザイン）
 .btn {
   padding: 10px 20px;
   border: 1px solid transparent;
@@ -509,6 +557,7 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
 }
 
 /* カラーバリエーション */
+/*
 .btn-primary {
   background: #3182ce;
   color: white;
@@ -547,7 +596,7 @@ defineExpose({ getCropped, resetCropper, deleteImage, cancelUpload, croppedImage
 }
 .btn-light:hover { background: #f7fafc; }
 
-.btn-block { width: 100%; }
+.btn-block { width: 100%; } */
 
 /* コントロール配置 */
 .controls {

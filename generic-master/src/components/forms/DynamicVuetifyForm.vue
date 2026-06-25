@@ -142,16 +142,17 @@ async function submit() {
       </v-col>
     </v-row>
 
-   <v-divider class="my-6" />
-
     <v-card
       v-if="attachmentFields.length"
       variant="flat"
       v-for="field in attachmentFields"
         :key="field.key"
     >
+
+    <v-divider class="my-6" />
+
       <v-card-title>
-        添付ファイル
+        {{ field.label }}
       </v-card-title>
     
       <v-card-text>

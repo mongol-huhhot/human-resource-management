@@ -559,42 +559,53 @@ watch(
 </script>
 
 <template>
-  <section class="wrapper">
-    <div class="toolbar" v-if="!isMobile">
-      <div class="toolbar__group">
-        <button 
-          type="button" 
-          class="btn-toggle" 
-          :class="{ 'btn-toggle--active': desktopMode === 'portrait' }" 
-          @click="desktopMode = 'portrait'"
-        >
-          📱 Portrait
-        </button>
-        <button 
-          type="button" 
-          class="btn-toggle" 
-          :class="{ 'btn-toggle--active': desktopMode === 'landscape' }" 
-          @click="desktopMode = 'landscape'"
-        >
-          💻 Landscape
-        </button>
-      </div>
-      <div class="toolbar__hint">
-        <span class="badge" :class="swapSizeInLandscape ? 'badge--success' : 'badge--neutral'">
-          Size swap: <b>{{ swapSizeInLandscape ? 'ON' : 'OFF' }}</b>
-        </span>
-      </div>
-    </div>
+  <!-- <v-card
+  variant="outlined"
+  class="mb-4"
+>
+  <v-card-text>
 
-    <div class="image-wrapper-container" :style="{ flexDirection }">
-      <div
-        v-for="(fileConfig, index) in files"
-        :key="fileConfig.field"
-        class="image-side"
-        :style="{ width: tileWidthPercent }"
+    <v-btn-toggle
+      v-model="desktopMode"
+      mandatory
+      color="primary"
+    >
+      <v-btn
+        value="portrait"
+        prepend-icon="mdi-cellphone"
       >
-        <UploadFile
-          :ref="(el) => setChildRef(el, index)"
+        Portrait
+      </v-btn>
+
+      <v-btn
+        value="landscape"
+        prepend-icon="mdi-monitor"
+      >
+        Landscape
+      </v-btn>
+    </v-btn-toggle>
+
+    <v-chip
+      class="ml-3"
+      :color="swapSizeInLandscape ? 'success' : 'default'"
+    >
+      Size swap:
+      {{ swapSizeInLandscape ? 'ON' : 'OFF' }}
+    </v-chip>
+
+  </v-card-text>
+</v-card> -->
+
+<v-row>
+  <v-col
+    v-for="(fileConfig, index) in files"
+    :key="fileConfig.field"
+    cols="12"
+    sm="6"
+    md="4"
+  >
+    <UploadFile
+    :ref="(el) => setChildRef(el, index)"
           :label="fileConfig.headerName"
           labelPosition="top"
           :uuId="imguuid(fileConfig.field)"
@@ -610,257 +621,30 @@ watch(
           :outputFormat="outputFormat"
           :maxWidth="maxWidth"
           :maxHeight="maxHeight"
-        />
-      </div>
-    </div>
+    />
+  </v-col>
+</v-row>
 
-    <div class="action-bar mt-4" v-if="editable">
-      <button
-        type="button"
-        class="btn-save"
-        :disabled="saving"
-        @click="saveAllImages"
-      >
-        <span v-if="saving" class="saving-content">
-          <v-progress-circular v-if="totalImages > 0" color="white" indeterminate size="18" width="2" class="mr-2"></v-progress-circular>
-          <span v-if="totalImages > 0">{{ saveProgress }}% 保存中...</span>
-          <span v-else>データを保存中...</span>
-        </span>
-        <span v-else class="d-flex align-center gap-2">
-          💾 すべて保存する
-        </span>
-      </button>
+<div class="d-flex flex-column align-center ga-4 mt-6">
 
-      <div v-if="saveResult" class="alert-wrapper">
-        <div class="alert" 
-             :class="{
-               'alert-success': saveResult.type === 'success',
-               'alert-error': saveResult.type === 'error',
-               'alert-info': saveResult.type === 'info'
-             }">
-          <span class="alert-icon">
-            <template v-if="saveResult.type === 'success'">✅</template>
-            <template v-else-if="saveResult.type === 'error'">❌</template>
-            <template v-else>ℹ️</template>
-          </span>
-          <div class="alert-message">{{ saveResult.message }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <v-btn
+    color="primary"
+    size="large"
+    prepend-icon="mdi-content-save"
+    :loading="saving"
+    @click="saveAllImages"
+  >
+    画像を保存
+  </v-btn>
+
+  <v-alert
+    v-if="saveResult"
+    :type="saveResult.type"
+    variant="tonal"
+    max-width="500"
+  >
+    {{ saveResult.message }}
+  </v-alert>
+
+</div>
 </template>
-
-<style scoped>
-/* 全体のベース設定 */
-.wrapper {
-  width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* ---- ツールバー（セグメントコントロール風に刷新） ---- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 4px 16px;
-}
-
-.toolbar__group {
-  display: inline-flex;
-  background: #f1f3f5;
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
-}
-
-.btn-toggle {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #495057;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-.btn-toggle:hover {
-  color: #212529;
-}
-.btn-toggle--active {
-  background: #ffffff;
-  color: #1a73e8;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-/* ツールバーヒント・バッジ */
-.toolbar__hint {
-  display: flex;
-  align-items: center;
-}
-.badge {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.badge--success {
-  background: #e6fffa;
-  color: #008767;
-  border: 1px solid #b2f5ea;
-}
-.badge--neutral {
-  background: #f7fafc;
-  color: #718096;
-  border: 1px solid #e2e8f0;
-}
-
-/* ---- 画像グリッドコンテナ ---- */
-.image-wrapper-container {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-/* 各タイル */
-.image-side {
-  min-width: 240px;
-  transition: all 0.3s ease;
-}
-
-/* ---- 保存ボタン（モダンプレミアム） ---- */
-.action-bar {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-}
-
-.btn-save {
-  padding: 12px 32px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  background: #3182ce;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.25);
-  transition: all 0.2s ease-in-out;
-}
-.btn-save:hover:not(:disabled) {
-  background: #2b6cb0;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(49, 130, 206, 0.35);
-}
-.btn-save:active:not(:disabled) {
-  transform: translateY(0);
-}
-.btn-save:disabled {
-  background: #a0aec0;
-  box-shadow: none;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.saving-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* Vuetifyのヘルパーが無い場合用のマージン補正 */
-.mr-2 { margin-right: 8px; }
-.d-flex { display: flex; }
-.align-center { align-items: center; }
-.gap-2 { gap: 8px; }
-
-/* ---- フィードバックアラート（モダンパステル） ---- */
-.alert-wrapper {
-  width: 100%;
-  max-width: 480px;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  text-align: left;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.alert-icon {
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-.alert-message {
-  font-weight: 500;
-}
-
-.alert-success {
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-.alert-error {
-  background: #fff5f5;
-  color: #9b2c2c;
-  border: 1px solid #fed7d7;
-}
-.alert-info {
-  background: #f0f9ff;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-}
-
-/* アニメーション */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---- レスポンシブ・スマホ最適化（強制縦並び） ---- */
-@media (max-width: 768px) {
-  .toolbar { display: none; }
-  .image-wrapper-container {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 24px;
-  }
-  .image-side {
-    width: 100% !important;
-    min-width: 0;
-  }
-  .btn-save {
-    width: 100%;
-    max-width: 320px;
-  }
-}
-
-/* ダークモード対応の微調整 */
-:where(html.dark) .toolbar__group {
-  background: #2d3748;
-  border-color: #4a5568;
-}
-:where(html.dark) .btn-toggle {
-  color: #a0aec0;
-}
-:where(html.dark) .btn-toggle--active {
-  background: #4a5568;
-  color: #fff;
-}
-</style>
