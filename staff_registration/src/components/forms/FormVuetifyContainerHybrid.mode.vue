@@ -618,3 +618,28 @@ watch(
   gap: 8px;
 }
 </style>
+
+
+<!-- 
+<DynamicVuetifyForm
+  v-model="formData"
+  :fields="fields"
+  :current-data="currentData"
+  :request-data="draftData"
+  :three-stage="true"
+/> 
+
+currentData なし
+requestData なし
+  → 新規入力モード
+
+currentData なし
+requestData draft あり
+  → 新規登録の下書き継続
+
+currentData なし
+requestData submitted あり
+  → 初期登録の承認待ち
+
+-->
+

@@ -6,7 +6,7 @@ import { showLoading, hideLoading } from '@/utils/loadingService'
 
 export const useFileStore = defineStore('fileStore', () => {
 
-    const DEFAULT_TID = 'premier'
+    const DEFAULT_TID = 'showcase'
   
     //サーバーから取得した「ファイル一覧のデータ」を格納しておくための、画面と連動する配列
     const files = ref({})

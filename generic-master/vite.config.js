@@ -22,7 +22,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '^/[^/]+/dataEngine/.*': {
-        target: 'https://surupas-run.native365.net',
+        target: 'https://surupas-dev.native365.net',
         changeOrigin: true,
         secure: false
       }

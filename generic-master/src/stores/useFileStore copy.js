@@ -5,7 +5,7 @@ import { showSnackbar } from '@/utils/SnackBar.vue'
 import { showLoading, hideLoading } from '@/utils/loadingService'
 
 export const useFileStore = defineStore('fileStore', () => {
-  const DEFAULT_TID = 'premier'
+  const DEFAULT_TID = 'showcase'
 
   const files = ref([])
   const currentFile = ref(null)

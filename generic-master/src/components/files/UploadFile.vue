@@ -4,7 +4,7 @@ import axios from 'axios'
 const formData = new FormData()
 
 formData.append('action', 'upload')
-formData.append('tenant_id', 'premier')
+formData.append('tenant_id', 'showcase')
 formData.append('category', 'staff_photo')
 formData.append('created_by', 'admin')
 formData.append('file', file)

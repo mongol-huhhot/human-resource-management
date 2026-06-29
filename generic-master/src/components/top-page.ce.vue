@@ -17,7 +17,7 @@ const props = defineProps({
     required: false,
     default: JSON.stringify({
       user_id: import.meta.env.VITE_DEV_USER_ID || 'dev_user',
-      tid: import.meta.env.VITE_DEV_TENANT_ID || 'premier',
+      tid: import.meta.env.VITE_DEV_TENANT_ID || 'showcase',
     }),
   },
 })

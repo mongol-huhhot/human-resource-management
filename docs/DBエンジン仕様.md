@@ -17,12 +17,11 @@
 - DBアクセス設定をconst.phpあるいはテナントDB両方できるように
 - 複数台DBサーバーへ自動切り替え仕組み追加。ロードバランスとDBサーバー障害対応のため、一台DBがコケている場合、自動的に次のDBサーバーへ切り替える機能を備えた
 - Token認証を標準機能にしました
-- 入り口： /${tenantid}/dataEngine/v5/handleRequest/requestHandler.php   
+- 入り口： /${tenantid}/dataEngine/v5/handleRequest/requestHandler.php 
     既存  /${tenantid}/dataEngine/v5/databaseEngine.phpもサポート
 
 ## pinia Store 
 ```code
-
 
 
 ```

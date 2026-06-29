@@ -13,7 +13,7 @@ export const useDbStore = defineStore('dbStore', () => {
   const tenantId = computed(() => {
     const tid = window.location.pathname.split('/').filter(Boolean)[0]
     if (tid) return tid
-    if (location.hostname === 'localhost') return 'premier'
+    if (location.hostname === 'localhost') return 'showcase'
     return ''
   })
 
