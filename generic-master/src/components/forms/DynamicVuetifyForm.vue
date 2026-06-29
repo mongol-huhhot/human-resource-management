@@ -47,6 +47,18 @@ const visibleFields = computed(() =>
   props.fields.filter(field => field && field.showable !== 'hide')
 )
 
+const normalFields = computed(() =>
+  visibleFields.value.filter(
+    field => field.group !== 'attachment'
+  )
+)
+
+const attachmentFields = computed(() =>
+  visibleFields.value.filter(
+    field => field.group === 'attachment'
+  )
+)
+
 // 表示用：Date オブジェクトに変換
 function toDisplayValue(field, value) {
   if (field.component !== 'v-date-input' && field.type !== 'date') return value

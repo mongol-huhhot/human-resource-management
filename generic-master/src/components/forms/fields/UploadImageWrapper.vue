@@ -20,16 +20,10 @@ const props = defineProps({
       documentType: '',   // ex) mynumber_card, ...
       ownerType: 'staff', // ex) staff, ...
       ownerId: '',        // ex) 11111, 22222, ...
+      recordId: '',        // ex) 
     })
   },
   
-  // // その他の画質・サイズ等の設定値は個別で維持
-  // swapSizeInLandscape: { type: Boolean, default: true },
-  // compressRatio:       { type: Number, default: 1 },    // 0.1 ~ 1
-  // jpegQuality:         { type: Number, default: 0.9 },  // 0.1 ~ 1
-  // outputFormat:        { type: String, default: 'image/jpeg' },
-  // maxWidth:            { type: Number, default: 0 },    // 0 = ignore
-  // maxHeight:           { type: Number, default: 0 },    // 0 = ignore
 })
 
 console.log("UploadImageWrapper.props================",props)
@@ -58,6 +52,12 @@ const outputFormat        = computed(() => cfg.value.outputFormat)
 const maxWidth            = computed(() => cfg.value.maxWidth)
 const maxHeight           = computed(() => cfg.value.maxHeight)
 
+const fileKey = computed(() => {
+  return props.meta.recordId
+    ? `${props.meta.documentType}#${props.meta.recordId}`
+    : props.meta.documentType
+})
+
 console.log("cfg.value.files======================",files.value)
 console.log("baseHeight, baseWidth",baseHeight.value, baseWidth.value)
 
@@ -71,7 +71,7 @@ const imgUrl = (field) => {
   const targetKind = `${props.meta.documentType}_${field}`
   
   // ストアの配列から合致するデータを見つける
-  const matchedFile = (fileStore.files[props.meta.documentType] || []).find(file => file.file_kind === targetKind)
+  const matchedFile = (fileStore.files[fileKey.value] || []).find(file => file.file_kind === targetKind)
   
   //console.log("matchedFile ? matchedFile.thumbnailUrl==========", matchedFile ? matchedFile.thumbnailUrl: "")
   // 見つかればそのサムネイルURL、なければ個別で指定の値を返す
@@ -83,7 +83,7 @@ const imguuid = (field) => {
   const targetKind = `${props.meta.documentType}_${field}`
   
   // ストアの配列から合致するデータを見つける
-  const matchedFile = (fileStore.files[props.meta.documentType] || []).find(file => file.file_kind === targetKind)
+  const matchedFile = (fileStore.files[fileKey.value] || []).find(file => file.file_kind === targetKind)
   
   //console.log("matchedFile ? matchedFile.thumbnailUrl==========", matchedFile ? matchedFile.thumbnailUrl: "")
   // 見つかればそのサムネイルURL、なければ個別で指定の値を返す
@@ -106,7 +106,8 @@ const makeFileParams = (field) => {
     category:   formattedCategory,                         // 例: "staff/profile"
     owner_type: props.meta.ownerType,                           // 例: "staff"
     owner_id:   formattedOwnerId,                          // 例: "staff_11111"
-    file_kind:  `${props.meta.documentType}_${field}`           // 例: "mynumber_card_front"
+    file_kind:  `${props.meta.documentType}_${field}`,           // 例: "mynumber_card_front"
+    record_id:   props.meta.recordId,
   }
 }
 
@@ -127,12 +128,13 @@ const filePayloadList = computed(() => {
       owner_type: props.meta.ownerType,                         // "staff"
       owner_id:   formattedOwnerId,                        // "staff_11111"
       file_kind:  `${props.meta.documentType}_${file.field}`,     // "mynumber_card_front" 形式
+      record_id:   props.meta.recordId,
       //document_type: props.meta.documentType,
     }
   })
 })
 // --- デバッグ・確認用 ---
- console.log("filePayloadList==================",JSON.stringify(filePayloadList.value, null, 2))
+ //console.log("filePayloadList==================",JSON.stringify(filePayloadList.value, null, 2))
 
  //デバッグ用
 watch(
@@ -150,12 +152,17 @@ const loadFiles = async () => {
 
     await fileStore.loadFiles(
       {
-        document_type: props.meta.documentType,
+        //document_type: props.meta.documentType,
+        //filestoreでもdocument_typeではなくfile_keyを参照するように変更
+        file_key:fileKey.value,
         filters: filePayloadList.value,
       }
     )
 
-    for (const file of fileStore.files[props.meta.documentType]) {
+
+    for (const file of fileStore.files[fileKey.value] || []) {
+
+    //for (const file of fileStore.files[props.meta.documentType]) {
       if (file.mime_type?.startsWith('image/')) {
   
         const preview = await fileStore.getPreviewUrl(file.file_uuid, {
@@ -164,6 +171,7 @@ const loadFiles = async () => {
   
         //console.log("file==", file)
         //console.log("preview==", preview)
+        console.log("filegetpreviewurl=======",preview?.url || null)
         file.thumbnailUrl = preview?.url || null
       }
     }
@@ -327,51 +335,6 @@ const saveAllImages = async () => {
     }
 
     // -------------------------------------------------------------
-    // 【新規追加】2. 編集前の元画像（古い画像）を特定し、一括で物理削除
-    // -------------------------------------------------------------
-    console.log('🧹 編集された枠の古い元画像を特定しています...')
-    const deleteTargets = []
-
-    for (const { fileConfig } of validComponents) {
-      // 現在ストアに保持されている最新ファイル群 (fileStore.files[props.meta.documentType]) から、
-      // 今回編集されたフィールド（例: 'front' や 'back'）に対応する既存の画像データを検索      
-      //filestore.fileの構造変更に合わせて修正
-      const currentFiles =
-        fileStore.files?.[props.meta.documentType] || []
-      
-      const existingFile = currentFiles.find(
-        f => f.file_kind === `${props.meta.documentType}_${fileConfig.field}`
-      )
-
-      if (existingFile && existingFile.file_uuid) {
-        deleteTargets.push({
-          uuid: existingFile.file_uuid,
-          field: existingFile.file_kind
-        })
-      }
-    }
-
-    // 古い画像が存在する場合のみ削除フェーズを実行
-    if (deleteTargets.length > 0) {
-      console.log(`🗑️ ${deleteTargets.length} 件の古い元画像を物理削除します...`)
-      
-      for (const target of deleteTargets) {
-        // deleteFileのローディングが全体と衝突しないよう options で伝播UIを制御
-        const isDeleted = await fileStore.deleteFile(target.uuid, { 
-          loading: true, 
-          loadingText: `${target.field} の古い画像を削除中...`,
-          showSuccessMessage: false // 一括処理なので個別の「成功しました」トーストは消す
-        })
-
-        // トランザクション制御：1件でも削除に失敗したら、新しい画像のアップロードに進まずエラー中断する
-        if (!isDeleted) {
-          throw new Error(`${target.field} の古い画像の削除に失敗したため、処理を中断しました。`)
-        }
-      }
-      console.log('✅ すべての古い元画像の削除が完了しました。')
-    }
-
-    // -------------------------------------------------------------
     // 3. 各新しい画像をループ処理で順番にアップロード（後半戦）
     // -------------------------------------------------------------
     totalImages.value = validComponents.length
@@ -493,6 +456,15 @@ watch(
   { deep: true, immediate: true }
 )
 
+//デバッグ用
+watch(
+  () => fileKey,
+  (val) => {
+    console.log('fileKey changed', val)
+  },
+  { deep: true, immediate: true }
+)
+
 watch(
   () => [
     props.meta.ownerId,
@@ -514,55 +486,21 @@ watch(
   }
 )
 
-// //デバッグ用
-// watch(
-//   () => uniqueStoreId.value,
-//   (val) => {
-//     console.log('uniqueStoreId changed', val)
-//   },
-//   { immediate: true }
-// )
-
 
 </script>
 
 <template>
-  <section class="wrapper">
-    <div class="toolbar" v-if="!isMobile">
-      <div class="toolbar__group">
-        <button 
-          type="button" 
-          class="btn-toggle" 
-          :class="{ 'btn-toggle--active': desktopMode === 'portrait' }" 
-          @click="desktopMode = 'portrait'"
-        >
-          📱 Portrait
-        </button>
-        <button 
-          type="button" 
-          class="btn-toggle" 
-          :class="{ 'btn-toggle--active': desktopMode === 'landscape' }" 
-          @click="desktopMode = 'landscape'"
-        >
-          💻 Landscape
-        </button>
-      </div>
-      <div class="toolbar__hint">
-        <span class="badge" :class="swapSizeInLandscape ? 'badge--success' : 'badge--neutral'">
-          Size swap: <b>{{ swapSizeInLandscape ? 'ON' : 'OFF' }}</b>
-        </span>
-      </div>
-    </div>
 
-    <div class="image-wrapper-container" :style="{ flexDirection }">
-      <div
-        v-for="(fileConfig, index) in files"
-        :key="fileConfig.field"
-        class="image-side"
-        :style="{ width: tileWidthPercent }"
-      >
-        <UploadFile
-          :ref="(el) => setChildRef(el, index)"
+<v-row>
+  <v-col
+    v-for="(fileConfig, index) in files"
+    :key="fileConfig.field"
+    cols="12"
+    sm="6"
+    md="4"
+  >
+    <UploadFile
+    :ref="(el) => setChildRef(el, index)"
           :label="fileConfig.headerName"
           labelPosition="top"
           :uuId="imguuid(fileConfig.field)"
@@ -578,257 +516,53 @@ watch(
           :outputFormat="outputFormat"
           :maxWidth="maxWidth"
           :maxHeight="maxHeight"
-        />
-      </div>
-    </div>
+    />
+  </v-col>
+</v-row>
 
-    <div class="action-bar mt-4" v-if="editable">
-      <button
-        type="button"
-        class="btn-save"
-        :disabled="saving"
-        @click="saveAllImages"
-      >
-        <span v-if="saving" class="saving-content">
-          <v-progress-circular v-if="totalImages > 0" color="white" indeterminate size="18" width="2" class="mr-2"></v-progress-circular>
-          <span v-if="totalImages > 0">{{ saveProgress }}% 保存中...</span>
-          <span v-else>データを保存中...</span>
-        </span>
-        <span v-else class="d-flex align-center gap-2">
-          💾 すべて保存する
-        </span>
-      </button>
+<!-- <div class="d-flex flex-column align-center ga-4 mt-6">
 
-      <div v-if="saveResult" class="alert-wrapper">
-        <div class="alert" 
-             :class="{
-               'alert-success': saveResult.type === 'success',
-               'alert-error': saveResult.type === 'error',
-               'alert-info': saveResult.type === 'info'
-             }">
-          <span class="alert-icon">
-            <template v-if="saveResult.type === 'success'">✅</template>
-            <template v-else-if="saveResult.type === 'error'">❌</template>
-            <template v-else>ℹ️</template>
-          </span>
-          <div class="alert-message">{{ saveResult.message }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <v-btn
+    color="primary"
+    size="large"
+    prepend-icon="mdi-content-save"
+    :loading="saving"
+    @click="saveAllImages"
+  >
+    画像を保存
+  </v-btn>
+
+  <v-alert
+    v-if="saveResult"
+    :type="saveResult.type"
+    variant="tonal"
+    max-width="500"
+  >
+    {{ saveResult.message }}
+  </v-alert>
+
+</div> -->
+
+
+<v-alert
+  v-if="saveResult"
+  :type="saveResult.type"
+  variant="tonal"
+  class="mt-4"
+>
+  {{ saveResult.message }}
+</v-alert>
+
+<div class="d-flex justify-end mt-6">
+  <v-btn
+    color="primary"
+    size="large"
+    prepend-icon="mdi-content-save"
+    :loading="saving"
+    @click="saveAllImages"
+  >
+    画像を保存
+  </v-btn>
+</div>
+
 </template>
-
-<style scoped>
-/* 全体のベース設定 */
-.wrapper {
-  width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* ---- ツールバー（セグメントコントロール風に刷新） ---- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 4px 16px;
-}
-
-.toolbar__group {
-  display: inline-flex;
-  background: #f1f3f5;
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
-}
-
-.btn-toggle {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #495057;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-.btn-toggle:hover {
-  color: #212529;
-}
-.btn-toggle--active {
-  background: #ffffff;
-  color: #1a73e8;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-/* ツールバーヒント・バッジ */
-.toolbar__hint {
-  display: flex;
-  align-items: center;
-}
-.badge {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.badge--success {
-  background: #e6fffa;
-  color: #008767;
-  border: 1px solid #b2f5ea;
-}
-.badge--neutral {
-  background: #f7fafc;
-  color: #718096;
-  border: 1px solid #e2e8f0;
-}
-
-/* ---- 画像グリッドコンテナ ---- */
-.image-wrapper-container {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-/* 各タイル */
-.image-side {
-  min-width: 240px;
-  transition: all 0.3s ease;
-}
-
-/* ---- 保存ボタン（モダンプレミアム） ---- */
-.action-bar {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-}
-
-.btn-save {
-  padding: 12px 32px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  background: #3182ce;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.25);
-  transition: all 0.2s ease-in-out;
-}
-.btn-save:hover:not(:disabled) {
-  background: #2b6cb0;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(49, 130, 206, 0.35);
-}
-.btn-save:active:not(:disabled) {
-  transform: translateY(0);
-}
-.btn-save:disabled {
-  background: #a0aec0;
-  box-shadow: none;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.saving-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* Vuetifyのヘルパーが無い場合用のマージン補正 */
-.mr-2 { margin-right: 8px; }
-.d-flex { display: flex; }
-.align-center { align-items: center; }
-.gap-2 { gap: 8px; }
-
-/* ---- フィードバックアラート（モダンパステル） ---- */
-.alert-wrapper {
-  width: 100%;
-  max-width: 480px;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  text-align: left;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.alert-icon {
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-.alert-message {
-  font-weight: 500;
-}
-
-.alert-success {
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-.alert-error {
-  background: #fff5f5;
-  color: #9b2c2c;
-  border: 1px solid #fed7d7;
-}
-.alert-info {
-  background: #f0f9ff;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-}
-
-/* アニメーション */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---- レスポンシブ・スマホ最適化（強制縦並び） ---- */
-@media (max-width: 768px) {
-  .toolbar { display: none; }
-  .image-wrapper-container {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 24px;
-  }
-  .image-side {
-    width: 100% !important;
-    min-width: 0;
-  }
-  .btn-save {
-    width: 100%;
-    max-width: 320px;
-  }
-}
-
-/* ダークモード対応の微調整 */
-:where(html.dark) .toolbar__group {
-  background: #2d3748;
-  border-color: #4a5568;
-}
-:where(html.dark) .btn-toggle {
-  color: #a0aec0;
-}
-:where(html.dark) .btn-toggle--active {
-  background: #4a5568;
-  color: #fff;
-}
-</style>
