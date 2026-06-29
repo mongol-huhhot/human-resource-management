@@ -186,6 +186,8 @@ export const useFileStore = defineStore('fileStore', () => {
     }
   
     const uploadFile = async (file, params = {}, options = {}) => {
+      
+      
       if (!file) {
         notice('ファイルを選択してください。', 'warning')
         return null
@@ -197,7 +199,10 @@ export const useFileStore = defineStore('fileStore', () => {
           owner_type: params.owner_type || 'common',
           owner_id: params.owner_id || 'none',
           file_kind: params.file_kind || 'default',
+          record_id: params.record_id || 'none',
         }
+
+        console.log('upload params=', uploadParams)
   
         const formData = new FormData()
         formData.append('file', file)
@@ -256,9 +261,21 @@ export const useFileStore = defineStore('fileStore', () => {
   
       const result = unwrap(json)
 
-     const documentType = params.document_type
+      // const recordId = params.record_id
+      const fileKey = params.file_key
+      //const documentType = params.document_type
 
-      files.value[documentType] = Array.isArray(result) ? result : []
+      // const fileKey = recordId
+      //   ? `${documentType}:${recordId}`
+      //   : documentType
+      
+        console.log("filekey============",fileKey)
+
+      files.value[fileKey] = Array.isArray(result)
+        ? result
+        : []
+
+      //files.value[documentType] = Array.isArray(result) ? result : []
   
       console.log("files.value=============", files.value)
   

@@ -24,6 +24,8 @@
         <DynamicVuetifyForm
           v-model="modelValue[index]"
           :fields="children"
+          :staffCode="staffCode"
+          :is-repeatable="true"
           @submit="data => emit('submit', data)"
         />
       </v-card-text>
@@ -40,6 +42,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import DynamicVuetifyForm from './DynamicVuetifyForm.vue'
 
 const props = defineProps({
@@ -52,8 +55,11 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  addButtonText: String
+  addButtonText: String,
+  staffCode: { type: String, default: '' },
 })
+
+const staffCode = computed(() =>props.staffCode)
 
 const emit = defineEmits(['update:modelValue', 'submit'])
 

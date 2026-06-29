@@ -6,14 +6,14 @@ import DynamicVuetifyForm from '@/components/forms/DynamicVuetifyForm.vue'
 import RepeatableFormWrapper from '@/components/forms/RepeatableFormWrapper.vue'
 import { parseJsonbFields, parseAndFlattenJsonbFields } from '@/composables/utilFactory'
 import { useFileStore } from '@/stores/useFileStore'
+import { buildSaveParams } from '@/composables/formParamBuilder'
 
 
 const dataStore = useDataStore()
 const configStore = useAppConfigStore()
 const fileStore = useFileStore()
 
-// --- 追加: フォームのref管理 ---
-const formRefs = ref({});
+const formRef = ref()
 
 configStore.loadFromWindow()
 
@@ -67,14 +67,38 @@ async function handleFormSubmit(tabCode, submittedData) {
   const row = dataStore.states.currentRow
   if (!row?.staff_code) return
 
+  const valid = await formRef.value.validate()
+
+  if (!valid) {
+    return
+  }
+
   const tabConfig = tabSqlTags.value[tabCode]
+
+  const commonParams = {
+    updated_by: 'admin',
+    staff_id:row.staff_id,
+    staff_code:row.staff_code
+  }
+
+  const saveSqlTag = tabConfig?.sqltags?.save
   if (!tabConfig) {
     console.error('tabConfig not found:', tabCode)
     return
   }
 
   const data = submittedData ?? formData.value[tabCode]
-  const ok = await dataStore.saveStaffTab(tabCode, data, tabConfig)
+
+  const params = buildSaveParams(
+    data,
+    tabConfig,
+    commonParams
+  )
+
+  
+  //console.log("data==============",data)
+  console.log("commonParams==============",commonParams)
+  const ok = await dataStore.saveData(saveSqlTag, params)
 
   if (ok) {
     const cat = getCategoryByTab(tabCode)
@@ -367,7 +391,7 @@ async function confirmDelete() {
           :key="tab.sub_category_code"
           :value="tab.sub_category_code"
         >
-          {{ tab.category_name }}
+          {{ tab.remarks }}
         </v-tab>
       </v-tabs>
 
@@ -385,24 +409,27 @@ async function confirmDelete() {
 
           <v-card variant="outlined">
             <v-card-title class="text-subtitle-1">
-              {{ tab.category_name }}
+              {{ tab.remarks }}
             </v-card-title>
 
             <v-card-text>
               <RepeatableFormWrapper
                 v-if="tab.data_structure === 'repeatable'"
                 v-model="formData[tab.sub_category_code]"
-                :label="tab.category_name"
+                :label="tab.remarks"
                 :children="getItemsByTab(tab.sub_category_code)"
                 :add-button-text="`${tab.category_name}追加`"
+                :staff-code="dataStore.states.currentRow?.staff_code"
                 @submit="data => handleFormSubmit(tab.sub_category_code, data)"
               />
 
               <DynamicVuetifyForm
                 v-else
                 v-model="formData[tab.sub_category_code]"
+                ref="formRef"
                 :fields="getItemsByTab(tab.sub_category_code)"
                 :staff-code="dataStore.states.currentRow?.staff_code"
+                :is-repeatable="false"
                 @submit="data => handleFormSubmit(tab.sub_category_code, data)"
               />
                 
