@@ -1,7 +1,5 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useDataStore } from '@/stores/DataStore'
-import { buildSaveParams } from '@/composables/formParamBuilder'
 import { buildRules } from '@/composables/useRuleFactory'
 
 const props = defineProps({
@@ -14,11 +12,30 @@ const props = defineProps({
   sqltags: { type: Object, default: null },
   tabConfig: { type: Object, default: () => ({}) },
   commonParams: { type: Object, default: () => ({}) },
+  staffCode: { type: String, default: '' },
+  isRepeatable: { type: Boolean, default: false },
 })
 
+const staffCode = computed(() =>props.staffCode)
+
+const recordId = computed(() => props.modelValue?.record_id)
+
+console.log("DynamicVuetifyForm.vue.props===========",props)
+
 const emit = defineEmits(['update:modelValue', 'submit', 'saved'])
-const dataStore = useDataStore()
 const saving = ref(false)
+
+const formRef = ref()
+
+const validate = async () => {
+  const result = await formRef.value.validate()
+
+  return result.valid
+}
+
+defineExpose({
+  validate
+})
 
 const formData = computed({
   get: () => props.modelValue,
@@ -27,6 +44,18 @@ const formData = computed({
 
 const visibleFields = computed(() =>
   props.fields.filter(field => field && field.showable !== 'hide')
+)
+
+const normalFields = computed(() =>
+  visibleFields.value.filter(
+    field => field.group !== 'attachment'
+  )
+)
+
+const attachmentFields = computed(() =>
+  visibleFields.value.filter(
+    field => field.group === 'attachment'
+  )
 )
 
 // 表示用：Date オブジェクトに変換
@@ -69,29 +98,15 @@ function updateField(field, value) {
 
 // 送信処理
 async function submit() {
-  if (!props.sqltags?.save) {
     emit('submit', formData.value)
-    return
-  }
-  saving.value = true
-  try {
-    const params = buildSaveParams(formData.value, props.tabConfig, props.commonParams)
-    const result = await dataStore.saveData(props.sqltags.save, params)
-    emit('saved', result)
-    emit('submit', formData.value)
-  } catch (error) {
-    console.error('DynamicVuetifyForm submit error:', error)
-  } finally {
-    saving.value = false
-  }
 }
 </script>
 
 <template>
-  <v-form @submit.prevent="submit">
+  <v-form @submit.prevent="submit" ref="formRef">
     <v-row dense>
       <v-col
-        v-for="field in visibleFields"
+        v-for="field in normalFields"
         :key="field.key"
         cols="12"
         sm="6"
@@ -114,6 +129,7 @@ async function submit() {
           :item-value="field.props?.itemValue || field.props?.['item-value'] || 'value'"
           :rules="buildRules(field)"
           @update:model-value="value => updateField(field, value)"
+          :staffCode="staffCode"
         />
       </v-col>
     </v-row>
@@ -125,5 +141,44 @@ async function submit() {
         </v-btn>
       </v-col>
     </v-row>
+
+    <v-card
+      v-if="attachmentFields.length"
+      variant="flat"
+      v-for="field in attachmentFields"
+        :key="field.key"
+    >
+
+    <v-divider class="my-6" />
+
+      <v-card-title>
+        {{ field.label }}
+      </v-card-title>
+    
+      <v-card-text>
+        <component
+          :is="field.component || 'v-text-field'"
+          :model-value="
+            field.component === 'v-date-input' || field.type === 'date'
+              ? toDisplayValue(field, formData[field.key])
+              : formData[field.key]
+          "
+          v-bind="field.props || {}"
+          :label="field.label"
+          :type="field.component === 'v-date-input' ? undefined : field.type"
+          :readonly="field.readonly"
+          :disabled="disabled || field.disabled"
+          :items="field.items || field.props?.items || []"
+          :item-title="field.props?.itemTitle || field.props?.['item-title'] || 'label'"
+          :item-value="field.props?.itemValue || field.props?.['item-value'] || 'value'"
+          :rules="buildRules(field)"
+          @update:model-value="value => updateField(field, value)"
+          :staffCode="staffCode"
+          :recordId="recordId"
+           :is-repeatable="isRepeatable"
+        />
+      </v-card-text>
+    </v-card>
+
   </v-form>
 </template>

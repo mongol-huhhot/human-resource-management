@@ -5,10 +5,15 @@ import { useAppConfigStore } from '@/stores/AppConfigStore'
 import DynamicVuetifyForm from '@/components/forms/DynamicVuetifyForm.vue'
 import RepeatableFormWrapper from '@/components/forms/RepeatableFormWrapper.vue'
 import { parseJsonbFields, parseAndFlattenJsonbFields } from '@/composables/utilFactory'
+import { useFileStore } from '@/stores/useFileStore'
+import { buildSaveParams } from '@/composables/formParamBuilder'
 
 
 const dataStore = useDataStore()
 const configStore = useAppConfigStore()
+const fileStore = useFileStore()
+
+const formRef = ref()
 
 configStore.loadFromWindow()
 
@@ -64,6 +69,59 @@ const tabItems = computed(() => {
 const editMode = computed(() => {
   return !!dataStore.states.currentRow
 })
+
+async function handleFormSubmit(tabCode, submittedData) {
+  const row = dataStore.states.currentRow
+  if (!row?.staff_code) return
+
+  const valid = await formRef.value.validate()
+
+  if (!valid) {
+    return
+  }
+
+  const tabConfig = tabSqlTags.value[tabCode]
+
+  const commonParams = {
+    updated_by: 'admin',
+    staff_id:row.staff_id,
+    staff_code:row.staff_code
+  }
+
+  const saveSqlTag = tabConfig?.sqltags?.save
+  if (!tabConfig) {
+    console.error('tabConfig not found:', tabCode)
+    return
+  }
+
+  const data = submittedData ?? formData.value[tabCode]
+
+  const params = buildSaveParams(
+    data,
+    tabConfig,
+    commonParams
+  )
+
+  
+  //console.log("data==============",data)
+  console.log("commonParams==============",commonParams)
+  const ok = await dataStore.saveData(saveSqlTag, params)
+
+  if (ok) {
+    const cat = getCategoryByTab(tabCode)
+    alert(`${cat?.category_name ?? tabCode}を保存しました`)
+
+    if (!tabConfig.skip_reload) {
+      await loadActiveTabData(tabCode, { force: true })
+    }
+  }
+}
+
+async function save() {
+  const tabCode = activeName.value
+  if (!tabCode) return
+  await handleFormSubmit(tabCode, formData.value[tabCode])
+}
 
 function normalizeCategoryRows(rows = []) {
   console.log('Normalizing category rows:', rows)
@@ -185,7 +243,7 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
         tabSqlTags.value[tabCode]?.sqltag ||
         'staffs.get_staff_data',
       category_code: tabCode,
-      staff_code: row?.staff_code || null,
+      staff_code: row?.staff_code || "11111",
       staff_id: row?.staff_id || null,
     }
   }
@@ -288,7 +346,7 @@ watch(
           :key="tab.sub_category_code"
           :value="tab.sub_category_code"
         >
-          {{ tab.category_name }}
+          {{ tab.remarks }}
         </v-tab>
       </v-tabs>
 
@@ -306,14 +364,14 @@ watch(
 
           <v-card variant="outlined">
             <v-card-title class="text-subtitle-1">
-              {{ tab.category_name }}
+              {{ tab.remarks }}
             </v-card-title>
 
             <v-card-text>
               <RepeatableFormWrapper
                 v-if="tab.data_structure === 'repeatable'"
                 v-model="formData[tab.sub_category_code]"
-                :label="tab.category_name"
+                :label="tab.remarks"
                 :children="getItemsByTab(tab.sub_category_code)"
                 :add-button-text="`${tab.category_name}追加`"
                 :sqltags="tabSqlTags[tab.sub_category_code]?.sqltags"
@@ -324,6 +382,7 @@ watch(
               <DynamicVuetifyForm
                 v-else
                 v-model="formData[tab.sub_category_code]"
+                ref="formRef"
                 :fields="getItemsByTab(tab.sub_category_code)"
                 :sqltags="tabSqlTags[tab.sub_category_code]?.sqltags"
                 :tab-config="tabSqlTags[tab.sub_category_code] || {}"

@@ -39,7 +39,7 @@ window.appConfig.MAIN_CONFIG = {
       data_key: 'staff_profile',
       jsonb_fields: ['profile_jsonb'],// jsonb カラムの一覧
       skip_reload: true,
-      sqltags:{ select:'staffs.get_staff_profile', save:'staffs.upsert_staff_profile', delete:'staffs.delete_staff_profile' },
+      sqltags:{ select:'get_current_staff_info', save:'staffs.upsert_staff_profile', delete:'staffs.delete_staff_profile' },
       separate_items: ['staff_code', 'profile_version'],// jsonb以外の普通カラム
     },
     bank: {
@@ -64,5 +64,77 @@ window.appConfig.MAIN_CONFIG = {
       sqltags:{ select:'masters.get_staff_education', save:'masters.upsert_staff_education', delete:'masters.delete_staff_education' },
     },
   },
+};
+
+window.appConfig.UploadFiles = {
+    // default config for staff. these items will be gotten from login information
+    editable: true, // if editable: false then the own has viewable permission only. if editable:  true then has editing permission
+    height: 200,    // number of Pixels
+    width:  200,    // number of Pixels
+    returnType: 'base64', // 'base64' or 'blob'
+    direction: 'row', // 'row' or 'column'
+    student_card: {
+        editable: true, // if editable: false then the own has viewable permission only. if editable:  true then has editing permission
+        height: 360,    // number of Pixels
+        width:  360,    // number of Pixels
+        returnType: 'blob', // 'base64' or 'blob'
+        direction: 'row', // 'row' or 'column'
+        files : [// you can define many files to be uloaded
+            { field: 'front', headerName: '学生証表'},
+            { field: 'back', headerName: '学生証裏'},
+            { field: 'diploma', headerName: '卒業書'},
+            { field: 'academic_transcript', headerName: '成績書'},
+        ],
+    },
+    mynumber_card: {
+        editable: true, // if editable: false then the own has viewable permission only. if editable:  true then has editing permission
+        height: 360,    // number of Pixels
+        width:  360,    // number of Pixels
+        returnType: 'blob', // 'base64' or 'blob'
+        direction: 'row', // 'row' or 'column'
+        swapSizeInLandscape: true,
+        compressRatio: 1,    // 0.1 ~ 1
+        jpegQuality:   0.9,  // 0.1 ~ 1
+        outputFormat:  'image/jpeg',
+        maxWidth:      0,    // 0 = ignore
+        maxHeight:     0,    // 0 = ignore
+        files :[ // you can define many files to be uloaded
+            { field: 'front', headerName: 'マイナンバーカード表'},
+            { field: 'back', headerName: 'マイナンバーカード裏'},
+        ]
+    },
+    bank_book: {
+        editable: true, // if editable: false then the own has viewable permission only. if editable:  true then has editing permission
+        height: 360,    // number of Pixels
+        width:  360,    // number of Pixels
+        returnType: 'blob', // 'base64' or 'blob'
+        direction: 'row', // 'row' or 'column'
+        swapSizeInLandscape: true,
+        compressRatio: 1,    // 0.1 ~ 1
+        jpegQuality:   0.9,  // 0.1 ~ 1
+        outputFormat:  'image/jpeg',
+        maxWidth:      0,    // 0 = ignore
+        maxHeight:     0,    // 0 = ignore
+        files :[ // you can define many files to be uloaded
+            { field: 'cover', headerName: '通帳表紙'},
+            { field: 'front', headerName: '通帳見開き'},
+        ]
+    },
+    bank_card: {
+        editable: true, // if editable: false then the own has viewable permission only. if editable:  true then has editing permission
+        height: 360,    // number of Pixels
+        width:  360,    // number of Pixels
+        returnType: 'blob', // 'base64' or 'blob'
+        direction: 'row', // 'row' or 'column'
+        swapSizeInLandscape: true,
+        compressRatio: 1,    // 0.1 ~ 1
+        jpegQuality:   0.9,  // 0.1 ~ 1
+        outputFormat:  'image/jpeg',
+        maxWidth:      0,    // 0 = ignore
+        maxHeight:     0,    // 0 = ignore
+        files :[ // you can define many files to be uloaded
+            { field: 'front', headerName: '銀行カード'},
+        ]
+    },
 };
 
