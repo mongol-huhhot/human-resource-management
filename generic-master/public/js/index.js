@@ -12,11 +12,27 @@ window.appConfig.MAIN_CONFIG = {
       sqltags:{ select:'get_current_staff_info', save:'staffs.upsert_staff_profile', delete:'staffs.delete_staff_profile' },
       separate_items: ['staff_code', 'profile_version'],// jsonb以外の普通カラム
     },
+    address: {
+      label: '基本情報',
+      data_key: 'staff_profile',
+      jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
+      skip_reload: true,
+      sqltags:{ select:'get_staff_address_info', save:'staffs.upsert_staff_profile', delete:'staffs.delete_staff_profile' },
+      separate_items: ['staff_code', 'profile_version'],// jsonb以外の普通カラム
+    },
+    contact: {
+      label: '基本情報',
+      data_key: 'staff_profile',
+      jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
+      skip_reload: true,
+      sqltags:{ select:'get_staff_contact_info', save:'staffs.upsert_staff_profile', delete:'staffs.delete_staff_profile' },
+      separate_items: ['staff_code', 'profile_version'],// jsonb以外の普通カラム
+    },
     bank: {
       label: '銀行情報',
       data_key: 'staff_bank',
-      jsonb_fields: [],// jsonb カラムの一覧
-      sqltags:{ select:'masters.get_staff_bank', save:'masters.upsert_staff_bank', delete:'masters.delete_staff_bank'}, // jsonb以外の普通カラム
+      jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
+      sqltags:{ select:'get_staff_bank_info', save:'masters.upsert_staff_bank', delete:'masters.delete_staff_bank'}, // jsonb以外の普通カラム
       separate_items: ['bank_code','bank_name','branch_code','branch_name','bank_account_type','bank_account','bank_account_kana','bank_account_kanji','is_primary','enabled','remarks',],
     },
 

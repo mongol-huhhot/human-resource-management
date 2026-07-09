@@ -55,7 +55,7 @@ watch(
     const staff_code = sc[0].staff_code;
 
     dataStore.params.attributes.staff_code = staff_code
-    if(staff_code) initialized.value = true
+    // if(staff_code) initialized.value = true
   },
   {
     deep: true,
@@ -80,7 +80,7 @@ async function login() {
   <v-locale-provider locale="ja">
     <div v-if="props.j">
       <FormVuetifyContainer 
-      v-if="initialized"/>
+      />
     </div>
 
     <div v-else>

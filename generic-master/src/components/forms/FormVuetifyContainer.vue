@@ -183,16 +183,36 @@ function getStaffKey(row) {
   return row?.staff_id || row?.staff_code || null
 }
 
+//DBテーブルの設計を変更したためそれにともない修正し、もとのコードをコメントアウト
+// function parseTabRows(tabCode, rows = []) {
+//   const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
+//   const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
+
+//   if (isRepeatableCategory(tabCode)) {
+//     if (Array.isArray(parsed)) return parsed
+//     return parsed ? [parsed] : []
+//   }
+
+//   return Array.isArray(parsed) ? (parsed[0] || {}) : {}
+// }
+
 function parseTabRows(tabCode, rows = []) {
-  const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
-  const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
+    const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
+    const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
 
-  if (isRepeatableCategory(tabCode)) {
-    if (Array.isArray(parsed)) return parsed
-    return parsed ? [parsed] : []
-  }
+    if (parsed.length === 0) {
+        return isRepeatableCategory(tabCode)
+            ? []
+            : {}
+    }
 
-  return Array.isArray(parsed) ? (parsed[0] || {}) : {}
+    const row = parsed[0]
+
+    if (isRepeatableCategory(tabCode)) {
+        return row[tabCode] ?? []
+    }
+
+    return row
 }
 
 // activeになったタブだけスタッフデータをロードする
@@ -239,10 +259,12 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
 
   //取得したデータの加工と格納
   const rows = multiQueryResult.data?.[tabCode] || []
+  console.log("rows=========",rows)
 
   //データベースから返ってきた生のデータ（JSONB形式など）を、
   // プログラムで扱いやすいように綺麗なオブジェクトに変換。
   const parsedData = parseTabRows(tabCode, rows)
+  console.log("parsedata==============",parsedData)
 
   //繰り返し型のタブ（職歴など）の場合: データを配列としてそのまま格納。
   if (isRepeatableCategory(tabCode)) {
