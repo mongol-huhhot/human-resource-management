@@ -4,7 +4,7 @@ import { useDataStore } from '@/stores/DataStore'
 import { useAppConfigStore } from '@/stores/AppConfigStore'
 import DynamicVuetifyForm from '@/components/forms/DynamicVuetifyForm.vue'
 import RepeatableFormWrapper from '@/components/forms/RepeatableFormWrapper.vue'
-import { parseJsonbFields, parseAndFlattenJsonbFields } from '@/composables/utilFactory'
+import { parseJsonbFields, parseAndFlattenJsonbFields, parseRepeatableJsonbFields } from '@/composables/utilFactory'
 import { useFileStore } from '@/stores/useFileStore'
 import { buildSaveParams } from '@/composables/formParamBuilder'
 
@@ -189,9 +189,9 @@ function getStaffName(row) {
   return row?.staff_name || row?.user_name || null
 }
 
-const currentStaffRow = computed(() => {
-  return dataStore.params?.attributes || dataStore.states?.staff_code || {}
-})
+const currentStaffRow = computed(() => ({
+  ...dataStore.params.attributes
+}))
 
 const commonParams = computed(() => {
   const row = currentStaffRow.value || {}
@@ -203,22 +203,38 @@ const commonParams = computed(() => {
   }
 })
 
+// function parseTabRows(tabCode, rows = []) {
+//   const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
+//   const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
+
+//   if (isRepeatableCategory(tabCode)) {
+//     if (Array.isArray(parsed)) return parsed
+//     return parsed ? [parsed] : []
+//   }
+
+//   return Array.isArray(parsed) ? (parsed[0] || {}) : {}
+// }
 function parseTabRows(tabCode, rows = []) {
-  const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
-  const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
+    const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
 
-  if (isRepeatableCategory(tabCode)) {
-    if (Array.isArray(parsed)) return parsed
-    return parsed ? [parsed] : []
-  }
+    if (isRepeatableCategory(tabCode)) {
+        return parseRepeatableJsonbFields(rows, jsonbFields)
+    }
 
-  return Array.isArray(parsed) ? (parsed[0] || {}) : {}
+    const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
+
+    const row = parsed[0]
+
+    return row
 }
 
 // activeになったタブだけスタッフデータをロードする
 const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
   const row = currentStaffRow.value
-  console.log("loadactivetabdata.row==========",row.staff_code)
+  console.log(row)
+console.log(row.staff_code)
+console.log(Object.keys(row))
+  console.log("loadactivetabdata.row==========",row)
   const staffKey = getStaffKey(row)
 
   if (!staffKey || !tabCode || !category.value?.length) return
@@ -231,6 +247,7 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
     return
   }
 
+  console.log("row.staff_code==========",row?.staff_code)
   const condition = {
     [tabCode]: {
       SQLTAG:
@@ -238,8 +255,8 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
         tabSqlTags.value[tabCode]?.sqltag ||
         'staffs.get_staff_data',
       category_code: tabCode,
-      staff_code: row?.staff_code || null,
-      staff_id: row?.staff_id || null,
+      staff_code: row.staff_code || null,
+      staff_id: row.staff_id || null,
     }
   }
 
@@ -257,7 +274,9 @@ const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
   }
 
   const rows = multiQueryResult.data?.[tabCode] || []
+  console.log("rows========",rows)
   const parsedData = parseTabRows(tabCode, rows)
+  console.log("parsedData========",parsedData)
 
   if (isRepeatableCategory(tabCode)) {
     formData.value[tabCode] = Array.isArray(parsedData) ? parsedData : []
@@ -362,7 +381,7 @@ watch(
 
           <v-card variant="outlined">
             <v-card-title class="text-subtitle-1">
-              {{ tab.remarks }}
+              {{ tab.remarks }} 
             </v-card-title>
 
             <v-card-text>

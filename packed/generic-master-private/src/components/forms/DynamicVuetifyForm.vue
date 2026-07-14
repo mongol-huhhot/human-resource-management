@@ -109,6 +109,17 @@ async function submit() {
 
 <template>
   <v-form @submit.prevent="submit" ref="formRef">
+
+    <v-row >
+      <v-col cols="12" class="text-right">
+        <div class="d-flex ga-2">
+          <v-chip color="success" prepend-icon="mdi-check-circle" v-if="formData.request_status === 'returned'">差し戻し</v-chip>
+          <v-chip color="warning" prepend-icon="mdi-alert" v-if="formData.request_status === 'draft'">下書き</v-chip>
+          <v-chip color="error" prepend-icon="mdi-close-circle" v-if="formData.request_status === 'submitted'">申請中</v-chip>
+        </div>
+      </v-col>
+    </v-row>
+
     <v-row dense>
       <v-col
         v-for="field in normalFields"
@@ -142,7 +153,10 @@ async function submit() {
     <v-row v-if="showSubmit">
       <v-col cols="12" class="text-right">
         <v-btn color="primary" type="submit" :loading="saving" :disabled="props.disabled">
-          保存
+          一時保存
+        </v-btn>
+        <v-btn color="primary" type="submit" :loading="saving" :disabled="props.disabled">
+          登録・変更申請
         </v-btn>
       </v-col>
     </v-row>

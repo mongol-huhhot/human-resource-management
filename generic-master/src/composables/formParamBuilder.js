@@ -1,15 +1,41 @@
 // src/composables/formParamBuilder.js
 
-export function removeSystemFields(row = {}) {
-  const copied = { ...row }
+// export function removeSystemFields(row = {}) {
+//   const copied = { ...row }
 
+//   delete copied.__uuid
+
+//   return copied
+// }
+
+export function removeSystemFields(data) {
+  if (Array.isArray(data)) {
+    return data.map(item => removeSystemFields(item))
+  }
+
+  const copied = { ...data }
   delete copied.__uuid
 
   return copied
 }
 
-export function omitKeys(obj = {}, keys = []) {
-  const copied = { ...obj }
+// export function omitKeys(obj = {}, keys = []) {
+//   const copied = { ...obj }
+
+//   keys.forEach(key => {
+//     delete copied[key]
+//   })
+
+//   return copied
+// }
+
+export function omitKeys(data, keys = []) {
+
+  if (Array.isArray(data)) {
+    return data.map(item => omitKeys(item, keys))
+  }
+
+  const copied = { ...data }
 
   keys.forEach(key => {
     delete copied[key]

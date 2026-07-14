@@ -61,3 +61,34 @@ export const parseAndFlattenJsonbFields = (
     return newRow
   })
 }
+
+export const parseRepeatableJsonbFields = (
+  rows = [],
+  keys = []
+) => {
+  if (!rows.length) return []
+
+  const row = rows[0]
+
+  for (const key of keys) {
+    try {
+      let parsed = row[key]
+
+      if (
+        typeof parsed === "string" &&
+        parsed.trim() !== ""
+      ) {
+        parsed = JSON.parse(parsed)
+      }
+
+      if (Array.isArray(parsed)) {
+        return parsed
+      }
+
+    } catch (e) {
+      console.error(`JSON parse failed: ${key}`, e)
+    }
+  }
+
+  return []
+}

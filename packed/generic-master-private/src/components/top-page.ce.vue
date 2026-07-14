@@ -52,10 +52,15 @@ watch(
         userid: dataStore.params.attributes.user_id
     })
 
+    console.log("result get_user_staff=====",sc )
+
     const staff_code = sc[0].staff_code;
+    const staff_id = sc[0].staff_id;
 
     dataStore.params.attributes.staff_code = staff_code
-    // if(staff_code) initialized.value = true
+    dataStore.params.attributes.staff_id = staff_id
+    if(staff_id) initialized.value = true
+    
   },
   {
     deep: true,
@@ -78,7 +83,7 @@ async function login() {
 
 <template>
   <v-locale-provider locale="ja">
-    <div v-if="props.j">
+    <div v-if="props.j && initialized">
       <FormVuetifyContainer 
       />
     </div>
