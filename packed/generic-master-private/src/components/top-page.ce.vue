@@ -85,8 +85,7 @@ async function login() {
   <v-locale-provider locale="ja">
     <div v-if="props.j">
       <FormVuetifyContainer 
-      ApplicationType="basic"
-      
+      :ApplicationType="dataStore.params.attributes.app_type"
       />
     </div>
 

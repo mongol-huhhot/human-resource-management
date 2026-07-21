@@ -4,18 +4,8 @@
 			"path": "."
 		},
 		{
-			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-run/var/www/html"
-		},
-		{
-			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-dev/var/www/html/sms"
-		},
-		{
-			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas/var/www/html/sms/common/relayMailer"
-		},
-		{
-			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-run/var/www/sms_workspace/dataEngine/template/premier/showcase"
+			"path": "../../../../run/user/1001/gvfs/sftp:host=surupas-dev/var/www/sms_workspace/dataEngine/template/showcase"
 		}
 	],
-	"settings": {
-	}
+	"settings": {}
 }

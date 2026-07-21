@@ -153,6 +153,7 @@ async function submit() {
         md="4"
       >
         <component
+          density="compact"
           :is="field.component || 'v-text-field'"
           :model-value="
             field.component === 'v-date-input' || field.type === 'date'
