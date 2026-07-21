@@ -1,7 +1,7 @@
 <!-- RepeatableFormWrapper.vue -->
 <template>
   <div>
-    <div class="d-flex justify-end mb-3">
+    <!-- <div class="d-flex justify-end mb-3">
       <v-btn
         color="primary"
         class="me-2"
@@ -21,7 +21,7 @@
       >
         登録・変更申請
       </v-btn>
-    </div>
+    </div> -->
 
     <v-card
       v-for="(item, index) in modelValue"
@@ -34,13 +34,13 @@
 
         <v-spacer />
 
-        <v-btn
+        <!-- <v-btn
           icon="mdi-delete"
           variant="text"
           color="error"
           :loading="deletingIndex === index"
           @click="remove(index, item)"
-        />
+        /> -->
       </v-card-title>
 
       <v-card-text>
@@ -49,7 +49,10 @@
           :ref="el => formRefs[index] = el"
           :fields="children"
           :is-repeatable="true"
-          :show-submit="false"
+          :show-submit="true"
+          :controls="controls"
+          :chipcontrols="chipcontrols"
+          @submit="data => emit('submit', data)"
           :sqltags="props.sqltags"
           :tab-config="props.tabConfig"
           :common-params="props.commonParams"
@@ -100,6 +103,10 @@ const props = defineProps({
     type: Object, 
     default: null 
   },
+  chipcontrols: {
+    type: Object, 
+    default: null 
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'saved', 'deleted'])
@@ -109,6 +116,7 @@ const saving = ref(false)
 const deletingIndex = ref(null)
 const formRefs = ref([])
 const controls = computed(() =>props.controls)
+const chipcontrols = computed(() =>props.chipcontrols)
 
 console.log("repeatable.props",props)
 

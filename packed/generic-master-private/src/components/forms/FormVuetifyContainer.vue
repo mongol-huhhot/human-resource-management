@@ -26,20 +26,22 @@ const loadedTabs = ref({})
 const loadingTabs = ref({})
 
 const tabSqlTags = computed(() => configStore.MAIN_CONFIG?.tab2sqltag_list || {})
-const controls = computed(() => {
-  return (
-    configStore.buttonRules?.[
-      currentStaffRequest.value.request_status
-    ] ?? {}
-  )
-})
-const chipcontrols = computed(() => {
-  return (
-    configStore.requestStatusConfig?.[
-      currentStaffRequest.value.request_status
-    ] ?? {}
-  )
-})
+const controls = computed(() => configStore.buttonRules || {})
+const chipcontrols = computed(() => configStore.requestStatusConfig || {})
+// const controls = computed(() => {
+//   return (
+//     configStore.buttonRules?.[
+//       currentStaffRequest.value.request_status
+//     ] ?? {}
+//   )
+// })
+// const chipcontrols = computed(() => {
+//   return (
+//     configStore.requestStatusConfig?.[
+//       currentStaffRequest.value.request_status
+//     ] ?? {}
+//   )
+// })
 
 const currentStaffRow = computed(() => ({
   ...dataStore.params.attributes
@@ -130,8 +132,6 @@ async function handleFormSubmit(tabCode, submittedData) {
     staff_id:row.staff_id,
     staff_code:row.staff_code,
     user_id:row.user_id,
-    data_type: tabCode,
-    request_status:submittedData
   }
 
   const saveSqlTag = tabConfig?.sqltags?.save
@@ -140,8 +140,8 @@ async function handleFormSubmit(tabCode, submittedData) {
     return
   }
 
-  const data = formData.value[tabCode]
-  // const data = submittedData ?? formData.value[tabCode]
+  //const data = formData.value[tabCode]
+  const data = submittedData ?? formData.value[tabCode]
 
   const params = buildSaveParams(
     data,
@@ -245,30 +245,30 @@ function getStaffName(row) {
 
 
 
-// function parseTabRows(tabCode, rows = []) {
-//   const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
-//   const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
-
-//   if (isRepeatableCategory(tabCode)) {
-//     if (Array.isArray(parsed)) return parsed
-//     return parsed ? [parsed] : []
-//   }
-
-//   return Array.isArray(parsed) ? (parsed[0] || {}) : {}
-// }
 function parseTabRows(tabCode, rows = []) {
-    const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
+  const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
+  const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
 
-    if (isRepeatableCategory(tabCode)) {
-        return parseRepeatableJsonbFields(rows, jsonbFields)
-    }
+  if (isRepeatableCategory(tabCode)) {
+    if (Array.isArray(parsed)) return parsed
+    return parsed ? [parsed] : []
+  }
 
-    const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
-
-    const row = parsed[0]
-
-    return row
+  return Array.isArray(parsed) ? (parsed[0] || {}) : {}
 }
+// function parseTabRows(tabCode, rows = []) {
+//     const jsonbFields = tabSqlTags.value[tabCode]?.jsonb_fields || []
+
+//     if (isRepeatableCategory(tabCode)) {
+//         return parseRepeatableJsonbFields(rows, jsonbFields)
+//     }
+
+//     const parsed = parseAndFlattenJsonbFields(rows, jsonbFields)
+
+//     const row = parsed[0]
+
+//     return row
+// }
 
 // activeになったタブだけスタッフデータをロードする
 const loadActiveTabData = async (tabCode = activeName.value, options = {}) => {
@@ -418,14 +418,14 @@ watch(
           {{ getStaffName(currentStaffRow) }}様
         </span>
       </div>
-      <v-chip
+      <!-- <v-chip
           :color="chipcontrols?.color"
           variant="flat"
           class="ml-2"
           :prepend-icon="chipcontrols?.icon"
         >
           {{ chipcontrols?.title }}
-        </v-chip>
+        </v-chip> -->
     </v-card-title>
 
     <v-divider />
@@ -469,6 +469,7 @@ watch(
                 :label="tab?.remarks"
                 :children="getItemsByTab(tab?.sub_category_code)"
                 :controls="controls"
+                :chipcontrols="chipcontrols"
                 :add-button-text="`${tab?.category_name}追加`"
                 :sqltags="tabSqlTags[tab?.sub_category_code]?.sqltags"
                 :tab-config="tabSqlTags[tab?.sub_category_code] || {}"
@@ -482,6 +483,7 @@ watch(
                 v-model="formData[tab?.sub_category_code]"
                 ref="formRef"
                 :controls="controls"
+                :chipcontrols="chipcontrols"
                 :fields="getItemsByTab(tab?.sub_category_code)"
                 :sqltags="tabSqlTags[tab?.sub_category_code]?.sqltags"
                 :tab-config="tabSqlTags[tab?.sub_category_code] || {}"

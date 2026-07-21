@@ -10,6 +10,7 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   showSubmit: { type: Boolean, default: true },
   controls: { type: Object, default: null },
+  chipcontrols: { type: Object, default: null },
   sqltags: { type: Object, default: null },
   tabConfig: { type: Object, default: () => ({}) },
   commonParams: { type: Object, default: () => ({}) },
@@ -21,7 +22,8 @@ const staffCode = computed(() =>props.staffCode)
 
 const recordId = computed(() => props.modelValue?.record_id)
 
-const controls = computed(() =>props.controls)
+const controls = computed(() =>props.controls?.[formData.value?.request_status] ?? {})
+const chipcontrols = computed(() =>props.chipcontrols?.[formData.value?.request_status] ?? {})
 
 console.log("DynamicVuetifyForm.vue.props===========",props)
 
@@ -104,28 +106,43 @@ function updateField(field, value) {
 }
 
 // 送信処理
-async function submit(status) {
+// async function submit(status) {
+//   const result = await formRef.value.validate()
+//   console.log("validate",result)
+//   if (!result.valid) {
+//     return
+//   }
+//     emit('submit', status)
+// }
+
+// 送信処理
+async function submit() {
   const result = await formRef.value.validate()
   console.log("validate",result)
   if (!result.valid) {
     return
   }
-    emit('submit', status)
+    emit('submit', formData.value)
 }
 </script>
 
 <template>
   <v-form @submit.prevent="submit" ref="formRef" v-model="valid">
 
-    <!-- <v-row >
+    <v-row >
       <v-col cols="12" class="text-right">
         <div class="d-flex ga-2">
-          <v-chip color="success" prepend-icon="mdi-check-circle" v-if="formData.request_status === 'returned'">差し戻し</v-chip>
-          <v-chip color="warning" prepend-icon="mdi-alert" v-if="formData.request_status === 'draft'">下書き</v-chip>
-          <v-chip color="error" prepend-icon="mdi-close-circle" v-if="formData.request_status === 'submitted'">申請中</v-chip>
+          <v-chip
+          :color="chipcontrols?.color"
+          variant="flat"
+          class="ml-2"
+          :prepend-icon="chipcontrols?.icon"
+        >
+          {{ chipcontrols?.title }}
+        </v-chip>
         </div>
       </v-col>
-    </v-row> -->
+    </v-row>
 
     <v-row dense>
       <v-col

@@ -90,15 +90,19 @@ window.appConfig.MAIN_CONFIG = {
       label: '銀行情報',
       data_key: 'staff_bank',
       jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
-      sqltags:{ select:'get_staff_personal_request', save:'save_staff_request_info', delete:'masters.delete_staff_bank'}, // jsonb以外の普通カラム
+      sqltags:{ select:'masters.get_staff_bank_request', save:'', delete:'masters.delete_staff_bank'}, // jsonb以外の普通カラム
       separate_items: ['id', 'staff_id', 'data_type', 'valid_from', 'valid_to', 'source_request_id', 'created_at', 'created_by', 'updated_at', 'updated_by' ],// jsonb以外の普通カラム
     },
     education: {
-      label: '資格情報',
+      label: '教育情報',
       data_key: 'staff_education',
-      jsonb_fields: ['education_info'],
-      sqltags:{ select:'masters.get_staff_education', save:'masters.upsert_staff_education', delete:'masters.delete_staff_education' },
-    },
+      jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
+      skip_reload: false,
+      sqltags:{ select:'masters.get_staff_education_request', save:'', delete:'' },
+      separate_items: ['id','approved_at','approved_by','rejected_at','rejected_by', 'staff_id', 'data_type', 'valid_from', 
+                       'created_at', 'created_by', 'updated_at', 'updated_by','request_type', 'requested_at', 'requested_by', 
+                       'request_status', 'request_comment', 'approval_comment'],// jsonb以外の普通カラム
+      },
     dependents: {
       label: '扶養情報',
       data_key: 'staff_dependents',
