@@ -38,16 +38,11 @@ onMounted(async () => {
 })
 
 async function loadTodos() {
-    // カテゴリ一覧と処理待ち件数を1リクエストで取得する
-    // count_staff_personal_request は staff_id を渡さない場合、全スタッフ分を集計する（管理者向け）
+    // get_staff_personal_request_counts_by_category は staff_id を渡さない場合、全スタッフ分を集計する
     const result = await dataStore.dbAccessWithMultiTags({
-        category: {
-            SQLTAG: 'masters.get_item_category',
+        request_counts: {
+            SQLTAG: 'get_staff_personal_request_counts_by_category',
             category_code: 'staffs',
-            enabled: 'active',
-        },
-        pending_counts: {
-            SQLTAG: 'count_staff_personal_request',
             request_statuses: pendingStatuses(),
             staff_id: null,
         },
@@ -58,17 +53,8 @@ async function loadTodos() {
         return
     }
 
-    const rows = (result.data?.category || [])
-        .filter(row => row?.enabled !== 'inactive')
-        .sort((a, b) => Number(a.show_order || 0) - Number(b.show_order || 0))
-
+    const rows = result.data?.request_counts || []
     if (!rows.length) return
-
-    // data_type（= sub_category_code）毎の件数マップに変換する
-    const pendingCounts = {}
-    ;(result.data?.pending_counts || []).forEach(row => {
-        pendingCounts[row.data_type] = Number(row.count) || 0
-    })
 
     todos.value = rows.map(cat => ({
         type: cat.remarks || cat.sub_category_name || cat.sub_category_code,
@@ -78,7 +64,7 @@ async function loadTodos() {
         sub_category_code: cat.sub_category_code,
         data_structure: cat.data_structure,
         ui_component: cat.ui_component,
-        count: pendingCounts[cat.sub_category_code] || 0,
+        count: Number(cat.count) || 0,
     }))
 }
 
