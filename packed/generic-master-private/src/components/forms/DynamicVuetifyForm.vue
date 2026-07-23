@@ -22,8 +22,8 @@ const staffCode = computed(() =>props.staffCode)
 
 const recordId = computed(() => props.modelValue?.record_id)
 
-const controls = computed(() =>props.controls?.[formData.value?.request_status] ?? {})
-const chipcontrols = computed(() =>props.chipcontrols?.[formData.value?.request_status] ?? {})
+const controls = computed(() =>props.controls?.[formData.value?.request_status ?? 'tmp'] ?? {})
+const chipcontrols = computed(() =>props.chipcontrols?.[formData.value?.request_status ?? 'tmp'] ?? {})
 
 console.log("DynamicVuetifyForm.vue.props===========",props)
 
@@ -116,11 +116,15 @@ function updateField(field, value) {
 // }
 
 // 送信処理
-async function submit() {
+async function submit(request_status) {
   const result = await formRef.value.validate()
   console.log("validate",result)
   if (!result.valid) {
     return
+  }
+
+  if(request_status){
+    formData.value.new_request_status = request_status
   }
     emit('submit', formData.value)
 }
@@ -178,13 +182,21 @@ async function submit() {
 
     <v-row v-if="showSubmit">
       <v-col cols="12" class="text-right">
-        <v-btn class="me-2" color="primary" @click="submit('draft')"  
-        :loading="saving" :disabled="props.disabled || !valid || controls?.draftSave?.disabled" v-show="controls?.draftSave?.show" >
+        <!-- <v-btn class="me-2" color="info" @click="submit('draft')"  
+        :loading="saving" :disabled="props.disabled  || controls?.newRequest?.disabled" v-show="controls?.newRequest?.show && !props.isRepeatable" >
+          新規申請作成
+        </v-btn> -->
+        <v-btn class="me-2" color="secondary" @click="submit('draft')"  
+        :loading="saving" :disabled="props.disabled  || controls?.draftSave?.disabled" v-show="controls?.draftSave?.show" >
           下書き保存
         </v-btn>
         <v-btn class="me-2" color="primary" @click="submit('submitted')" 
         :loading="saving" :disabled="props.disabled || !valid || controls?.submit?.disabled" v-show="controls?.draftSave?.show">
           登録・変更申請
+        </v-btn>
+        <v-btn class="me-2" color="error" @click="submit('')"  
+        :loading="saving" :disabled="props.disabled  || controls?.delete?.disabled" v-show="controls?.delete?.show" >
+          削除申請
         </v-btn>
       </v-col>
     </v-row>

@@ -39,30 +39,30 @@ window.appConfig.MAIN_CONFIG = {
       data_key: 'staff_profile',
       jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
       skip_reload: false,
-      sqltags:{ select:'get_staff_personal_request', save:'save_staff_request_info', delete:'staffs.delete_staff_profile' },
+      sqltags:{ select:'get_staff_personal_request', save:'upsert_staff_request_info',insert:'insert_staff_request_info',update:'update_staff_request_info', delete:'staffs.delete_staff_profile' },
       separate_items: ['id','approved_at','approved_by','rejected_at','rejected_by', 'staff_id', 'data_type', 'valid_from', 
                        'created_at', 'created_by', 'updated_at', 'updated_by','request_type', 'requested_at', 'requested_by', 
-                       'request_status', 'request_comment', 'approval_comment'],// jsonb以外の普通カラム
+                       'request_status', 'request_comment', 'approval_comment','new_request_status'],// jsonb以外の普通カラム
     },
     address: {
       label: '住所情報',
       data_key: 'staff_address',
       jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
       skip_reload: false,
-      sqltags:{ select:'get_staff_personal_request', save:'save_staff_request_info', delete:'' },
+      sqltags:{ select:'get_staff_personal_request', save:'upsert_staff_request_info',insert:'insert_staff_request_info',update:'update_staff_request_info',  delete:'' },
       separate_items: ['id','approved_at','approved_by','rejected_at','rejected_by', 'staff_id', 'data_type', 'valid_from', 
                        'created_at', 'created_by', 'updated_at', 'updated_by','request_type', 'requested_at', 'requested_by', 
-                       'request_status', 'request_comment', 'approval_comment'],// jsonb以外の普通カラム
+                       'request_status', 'request_comment', 'approval_comment','new_request_status'],// jsonb以外の普通カラム
     },
     contact: {
       label: '連絡先情報',
       data_key: 'staff_contact',
       jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
       skip_reload: false,
-      sqltags:{ select:'get_staff_personal_request', save:'save_staff_request_info', delete:'' },
+      sqltags:{ select:'get_staff_personal_request', save:'upsert_staff_request_info', insert:'insert_staff_request_info',update:'update_staff_request_info', delete:'' },
       separate_items: ['id','approved_at','approved_by','rejected_at','rejected_by', 'staff_id', 'data_type', 'valid_from', 
                        'created_at', 'created_by', 'updated_at', 'updated_by','request_type', 'requested_at', 'requested_by', 
-                       'request_status', 'request_comment', 'approval_comment'],// jsonb以外の普通カラム
+                       'request_status', 'request_comment', 'approval_comment','new_request_status'],// jsonb以外の普通カラム
     },
     mynumber: {
       label: 'マイナンバー情報',
@@ -91,17 +91,17 @@ window.appConfig.MAIN_CONFIG = {
       data_key: 'staff_bank',
       jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
       sqltags:{ select:'masters.get_staff_bank_request', save:'', delete:'masters.delete_staff_bank'}, // jsonb以外の普通カラム
-      separate_items: ['id', 'staff_id', 'data_type', 'valid_from', 'valid_to', 'source_request_id', 'created_at', 'created_by', 'updated_at', 'updated_by' ],// jsonb以外の普通カラム
+      separate_items: ['id', 'staff_id', 'data_type', 'valid_from', 'valid_to', 'source_request_id', 'created_at', 'created_by', 'updated_at', 'updated_by' ,'new_request_type'],// jsonb以外の普通カラム
     },
     education: {
       label: '教育情報',
       data_key: 'staff_education',
       jsonb_fields: ['data_jsonb'],// jsonb カラムの一覧
       skip_reload: false,
-      sqltags:{ select:'masters.get_staff_education_request', save:'', delete:'' },
+      sqltags:{ select:'masters.get_staff_education_request', save:'upsert_staff_request_info', insert:'insert_staff_request_info',update:'update_staff_request_info', delete:'' },
       separate_items: ['id','approved_at','approved_by','rejected_at','rejected_by', 'staff_id', 'data_type', 'valid_from', 
                        'created_at', 'created_by', 'updated_at', 'updated_by','request_type', 'requested_at', 'requested_by', 
-                       'request_status', 'request_comment', 'approval_comment'],// jsonb以外の普通カラム
+                       'request_status', 'request_comment', 'approval_comment','new_request_status'],// jsonb以外の普通カラム
       },
     dependents: {
       label: '扶養情報',
@@ -218,21 +218,21 @@ window.appConfig.UploadFiles = {
 window.appConfig.buttonRules = {
   draft: {
     draftSave:      { show: true,  disabled: false },
-    delete:         { show: true,  disabled: false },
+    delete:         { show: false,  disabled: false },
     newRequest:     { show: false, disabled: true  },
     submit:         { show: true,  disabled: false },
   },
 
   submitted: {
     draftSave:      { show: true,  disabled: true },
-    delete:         { show: true,  disabled: true },
+    delete:         { show: false,  disabled: true },
     newRequest:     { show: false, disabled: true },
     submit:         { show: true,  disabled: true },
   },
 
   returned: {
     draftSave:      { show: true,  disabled: false },
-    delete:         { show: true,  disabled: false },
+    delete:         { show: false,  disabled: false },
     newRequest:     { show: false, disabled: true },
     submit:         { show: true,  disabled: false },
   },
@@ -249,6 +249,12 @@ window.appConfig.buttonRules = {
     delete:         { show: false, disabled: true },
     newRequest:     { show: true,  disabled: false },
     submit:         { show: false, disabled: true },
+  },
+  tmp: {
+    draftSave:      { show: true, disabled: false },
+    delete:         { show: false, disabled: true },
+    newRequest:     { show: false,  disabled: true },
+    submit:         { show: true, disabled: false },
   },
 };
 window.appConfig.requestStatusConfig = {
@@ -281,7 +287,7 @@ window.appConfig.requestStatusConfig = {
 
   approved: {
     title: "承認済み",
-    color: "success",
+    color: "info",
     icon: "mdi-check-circle",
     variant: "flat",
     textColor: "white",
@@ -291,6 +297,14 @@ window.appConfig.requestStatusConfig = {
   rejected: {
     title: "却下",
     color: "error",
+    icon: "mdi-close-circle",
+    variant: "flat",
+    textColor: "white",
+    description: "申請は却下されました"
+  },
+  tmp: {
+    title: "未保存",
+    color: "warning",
     icon: "mdi-close-circle",
     variant: "flat",
     textColor: "white",

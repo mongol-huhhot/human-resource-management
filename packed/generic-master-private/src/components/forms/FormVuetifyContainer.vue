@@ -132,16 +132,23 @@ async function handleFormSubmit(tabCode, submittedData) {
     staff_id:row.staff_id,
     staff_code:row.staff_code,
     user_id:row.user_id,
+    data_type: tabCode
   }
 
-  const saveSqlTag = tabConfig?.sqltags?.save
+  const data = submittedData ?? formData.value[tabCode]
+
+  const saveSqlTag =
+        data.id
+            ? tabConfig.sqltags.update
+            : tabConfig.sqltags.insert
+  
+  //const saveSqlTag = tabConfig?.sqltags?.save
   if (!tabConfig) {
     console.error('tabConfig not found:', tabCode)
     return
   }
 
-  //const data = formData.value[tabCode]
-  const data = submittedData ?? formData.value[tabCode]
+  
 
   const params = buildSaveParams(
     data,
