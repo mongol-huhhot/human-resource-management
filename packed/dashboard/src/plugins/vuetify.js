@@ -5,19 +5,8 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
-
-// const myCustomTheme = {
-//   dark: false,
-//   colors: {
-//     primary: '#1976D2', // Blue
-//     secondary: '#424242', // Grey
-//     accent: '#82B1FF', // Light Blue
-//     error: '#FF5252', // Red
-//     info: '#2196F3', // Light Blue
-//     success: '#4CAF50', // Green
-//     warning: '#FB8C00', // Orange
-//   },
-// };
+import { VDateInput } from 'vuetify/labs/VDateInput';
+import ImageUploader from '@/components/forms/fields/ImageUploader.vue';
 
 const myCustomTheme = {
   dark: false,
@@ -33,7 +22,7 @@ const myCustomTheme = {
 };
 
 const vuetify = createVuetify({
-  components,
+  components: { ...components, VDateInput, ImageUploader },
   directives,
   theme: {
     defaultTheme: 'myCustomTheme',

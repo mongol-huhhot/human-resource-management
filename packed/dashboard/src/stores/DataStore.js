@@ -1,12 +1,14 @@
 import { reactive } from "vue";
 import { defineStore } from "pinia";
 import { useDbStore } from "@/stores/useDbStore";
+import { buildInitColumns } from "@/composables/useColumns";
 
 export const useDataStore = defineStore("dataStore", () => {
     const baseStore = useDbStore();
 
     const CONST_DEF = {
         get_item_category: 'masters.get_item_category',
+        get_staff_profile_by_request: 'staffs.get_staff_profile_by_request',
     }
 
     const states = reactive({
@@ -15,6 +17,7 @@ export const useDataStore = defineStore("dataStore", () => {
 
     const data = reactive({
         'category': [],
+        get_staff_profile_by_request: [],
     })
 
     const params = reactive({
@@ -38,6 +41,20 @@ export const useDataStore = defineStore("dataStore", () => {
 
     const get_item_category = async (p = {}) => {
         return await runLoad(CONST_DEF.get_item_category, p, 'category')
+    }
+
+    const get_staff_profile_by_request = async (p = {}) => {
+        return await runLoad(CONST_DEF.get_staff_profile_by_request, p, 'get_staff_profile_by_request')
+    }
+
+    // グリッドのセルクリックで選択行を共有する（user-master と同じチャネル）
+    const rowClicked = (v) => {
+        states.currentRow = v?.data || null
+    }
+
+    // StaffList 用の列定義。onRowClicked は staff_code/staff_name セルに紐づく
+    function buildColumnsDefine(onRowClicked) {
+        return buildInitColumns(onRowClicked)
     }
 
     const login = async (p = {}, options = {}, SQL_PATH = null) => await baseStore.login('authenticate.login', p, options, SQL_PATH)
@@ -67,6 +84,9 @@ export const useDataStore = defineStore("dataStore", () => {
         saveData,
 
         get_item_category,
+        get_staff_profile_by_request,
+        rowClicked,
+        buildColumnsDefine,
 
         login,
         logout,

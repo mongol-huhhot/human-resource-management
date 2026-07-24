@@ -7,6 +7,8 @@ import { useDataStore } from '@/stores/DataStore'
 import TodoPane from '@/components/dashboard/TodoPane.vue'
 import NoticePane from '@/components/dashboard/NoticePane.vue'
 import MenuPane from '@/components/dashboard/MenuPane.vue'
+import StaffList from '@/views/StaffList.vue'
+import FormVuetifyContainer from '@/components/forms/FormVuetifyContainer.vue'
 
 const appConfigStore = useAppConfigStore()
 const dataStore = useDataStore()
@@ -68,9 +70,37 @@ async function loadTodos() {
     }))
 }
 
-// 処理待ちの「確認」ボタン。今後 category_code/sub_category_code による画面遷移をここに実装する
+// 処理待ち画面ダイアログの状態
+const todoDialog = ref(false)
+const currentTodo = ref(null)
+const selectedRow = ref(null)
+
+// 処理待ちから開くスタッフ一覧の絞り込み条件。currentTodo に連動する
+const staffListFilter = computed(() => {
+    if (!currentTodo.value?.sub_category_code) return null
+    return {
+        sub_category_code: currentTodo.value.sub_category_code,
+        request_statuses: pendingStatuses(),
+    }
+})
+
+// 処理待ちの「確認」ボタン。スタッフ一覧をダイアログで開く
 function handleTodoConfirm(item) {
-    console.log('todo confirm:', item)
+    currentTodo.value = item
+    selectedRow.value = null
+    todoDialog.value = true
+}
+
+// スタッフ一覧で行選択。選択スタッフをフォームコンテナに渡す
+function handleStaffSelected(row) {
+    selectedRow.value = row
+    dataStore.params.attributes = row || {}
+}
+
+// ダイアログを閉じるときも件数を最新化する
+async function closeTodoDialog() {
+    todoDialog.value = false
+    await loadTodos()
 }
 
 // メニュー選択。今後 menu.url への遷移をここに実装する
@@ -112,6 +142,56 @@ function handleMenuSelect(menu) {
             </pane>
           </splitpanes>
         </div>
+
+        <!-- 処理待ち「確認」で開く画面 -->
+        <v-dialog
+          v-model="todoDialog"
+          fullscreen
+          >
+          <v-card class="todo-dialog-card">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <span class="text-subtitle-1 font-weight-bold">
+                <span v-if="currentTodo?.type">[{{ currentTodo.type }}]</span>
+                {{ currentTodo?.text }}
+              </span>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                @click="closeTodoDialog"
+              />
+            </v-card-title>
+
+            <v-divider />
+
+            <v-card-text class="pa-2 todo-dialog-body">
+              <splitpanes class="default-theme" style="height: 100%;">
+                <!-- 左 pane スタッフ一覧 -->
+                <pane size="45" min-size="20">
+                  <div class="dialog-list-pane">
+                    <StaffList
+                      :request-filter="staffListFilter"
+                      @row-selected="handleStaffSelected"
+                    />
+                  </div>
+                </pane>
+
+                <!-- 右 pane フォーム -->
+                <pane size="55" min-size="30">
+                  <div v-if="selectedRow" class="dialog-form-pane">
+                    <FormVuetifyContainer
+                      :key="`${currentTodo?.sub_category_code}:${selectedRow?.staff_id || selectedRow?.staff_code}`"
+                      :ApplicationType="currentTodo?.sub_category_code"
+                    />
+                  </div>
+                  <div v-else class="dialog-form-placeholder">
+                    左の一覧からスタッフを選択してください
+                  </div>
+                </pane>
+              </splitpanes>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
       </v-main>
     </v-layout>
   </v-app>
@@ -136,5 +216,41 @@ function handleMenuSelect(menu) {
 
 :deep(.splitpanes__splitter:hover) {
   background: #29b6f6;
+}
+
+.todo-dialog-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dialog-list-pane {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.dialog-form-pane {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.dialog-form-pane :deep(.container-card) {
+  height: auto;
+  min-height: 100%;
+}
+
+.dialog-form-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #90a4ae;
+  font-size: 1.1em;
 }
 </style>
